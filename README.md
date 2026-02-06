@@ -1,0 +1,139 @@
+# Kidsights-NORC
+
+Sample monitoring tools for NORC researchers tracking the Minnesota 2026 (MN26) study recruitment progress and demographic distribution during data collection.
+
+## Overview
+
+This repository provides standalone R scripts that connect to REDCap via API to monitor:
+
+- **Screener completion** - Has eligibility been determined?
+- **Eligibility status** - 4 criteria: parent age ≥19, child age 0-5 years, primary caregiver, Minnesota residence
+- **Survey completion** - Module-by-module tracking with completion percentages
+- **Demographics** - Child and parent characteristics for sample monitoring
+
+## Current Status
+
+⚠️ **TEMPLATE MODE**: Scripts currently use **NE25 (Nebraska 2025) data as a template** to demonstrate functionality. Once MN26 data collection begins, variable names will need to be updated. See `[MN26 TODO]` comments throughout the code.
+
+## Quick Start
+
+### 1. Install R Dependencies
+
+```r
+install.packages(c("dplyr", "tidyr", "REDCapR", "httr"))
+```
+
+### 2. Create API Credentials File
+
+Create a CSV file with your REDCap API credentials (use `progress-monitoring/mn26/mn26_redcap_api_template.csv` as template):
+
+```csv
+project,pid,api_code
+mn26_main_survey,7679,YOUR_API_TOKEN_HERE
+```
+
+**Security Note**: Store this file outside the repository (e.g., `C:/Users/YOUR_USERNAME/my-APIs/`) and **never commit it to git**.
+
+### 3. Run the Monitoring Report
+
+```r
+# Load the script
+source("progress-monitoring/mn26/monitoring_report.R")
+
+# Generate monitoring report
+monitoring_data <- generate_monitoring_report(
+  csv_path = "C:/Users/YOUR_USERNAME/my-APIs/mn26_redcap_api.csv"
+)
+
+# View results
+table(monitoring_data$screener_status$screener_status)
+table(monitoring_data$eligibility$eligible)
+table(monitoring_data$survey_completion$survey_status)
+View(monitoring_data$child_demographics)
+View(monitoring_data$parent_demographics)
+```
+
+## Repository Structure
+
+```
+kidsights-norc/
+├── progress-monitoring/
+│   └── mn26/
+│       ├── monitoring_report.R          # Main monitoring script
+│       ├── mn26_redcap_api_template.csv # API credentials template
+│       ├── README.md                     # Detailed documentation
+│       └── utils/
+│           ├── redcap_utils.R           # REDCap API functions
+│           ├── data_transforms.R        # Data transformation functions
+│           └── safe_joins.R             # Safe join utilities
+├── CLAUDE.md                             # Development guide for AI assistants
+└── README.md                             # This file
+```
+
+## Features
+
+### Self-Contained Design
+- No external pipeline dependencies
+- No database connections required
+- Simple function call with CSV path
+- Standalone utility functions
+
+### Secure API Management
+- CSV-based credentials (not environment variables)
+- Multiple REDCap projects supported
+- Each collaborator maintains their own local credentials file
+- `.gitignore` configured to exclude sensitive files
+
+### Comprehensive Monitoring Output
+
+The script returns 5 data frames:
+
+1. **Screener Status** - Tracks whether eligibility has been determined
+2. **Eligibility** - Four eligibility criteria with overall determination
+3. **Survey Completion** - Module-by-module completion tracking
+4. **Child Demographics** - Age and sex distribution
+5. **Parent Demographics** - Age, sex, race/ethnicity, education, marital status
+
+## Required REDCap Variables
+
+The monitoring script requires access to **28 raw REDCap variables** through the API:
+
+- **Identifiers**: `pid`, `record_id`
+- **Eligibility screening**: `eq001`, `eq002`, `eq003`, `eqstate`, `age_in_days`
+- **Survey completion**: `module_2_complete` through `module_9_complete`
+- **Child demographics**: `age_in_days`, `cqr009`
+- **Parent demographics**: `cqr002`, `cqr003`, `cqr004`, `sq002___*` (race checkboxes), `sq003`, `cqfa001`
+
+See `progress-monitoring/mn26/README.md` for complete variable list and data governance details.
+
+## Adapting for MN26 Data
+
+When MN26 data collection begins, search for `[MN26 TODO]` comments to identify areas requiring updates:
+
+1. **REDCap URL** - Update to Minnesota REDCap instance
+2. **Variable names** - Verify against MN26 data dictionary
+3. **Module list** - Update to match MN26 survey structure
+4. **State code** - Change eligibility check from Nebraska to Minnesota
+5. **Multi-child handling** - MN26 allows up to 2 children per household
+
+## Documentation
+
+- **`progress-monitoring/mn26/README.md`** - Detailed documentation including variable requirements, API setup, output descriptions, and adaptation guide
+- **`CLAUDE.md`** - Development guide for Claude Code with architecture overview and key commands
+
+## Security Notes
+
+⚠️ **NEVER commit the following to git:**
+- API credentials CSV files
+- Any files containing REDCap API tokens
+- Protected health information (PHI)
+
+The repository `.gitignore` is configured to exclude sensitive files automatically.
+
+## Contact
+
+For questions about adapting this script for MN26 data, contact Marcus Waldman.
+
+## License
+
+Internal NORC research tool. Not for public distribution.
