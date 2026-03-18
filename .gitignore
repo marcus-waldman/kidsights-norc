@@ -48,6 +48,37 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
+# Data files - never commit data to git
+*.csv
+!*_template.csv
+*.xlsx
+*.xls
+*.rds
+*.rda
+*.RData
+*.sav
+*.spss
+*.dat
+*.dta
+*.sas7bdat
+*.xpt
+*.por
+*.feather
+*.parquet
+*.arrow
+*.fst
+*.json
+*.jsonl
+*.ndjson
+*.tsv
+*.tab
+*.dbf
+*.sqlite
+*.db
+*.hdf5
+*.h5
+*.avro
+
 # Claude Code files
 .claude/
 .claude_*
