@@ -13,55 +13,33 @@ This repository provides standalone R scripts that connect to REDCap via API to 
 
 ## Current Status
 
-🚧 **IN DEVELOPMENT** — The monitoring script has been tested against the NORC NE Smoke Test REDCap project and is not yet fully operational. Below is a summary of what works and what remains to be resolved.
+✅ **SMOKE TEST PASSING** — The monitoring script runs end-to-end against the NORC NE Smoke Test REDCap project (20 records, 62 columns).
 
-### What Works
+### Smoke Test Results
 
-- **REDCap API access is confirmed** — successfully connected and retrieved **20 records** and **60 columns** from the NORC NE Smoke Test project using `REDCapR::redcap_read()`
-- **Data transforms run successfully** — child age, sex, parent demographics, race/ethnicity derivations all execute without error on the smoke test data
-
-### Variables Present in Smoke Test
-
-| Variable | Used For | Status |
-|---|---|---|
-| `record_id` | Record identifier | ✅ Present |
-| `eqstate` | State residence eligibility | ✅ Present |
-| `age_in_days` | Child age eligibility + demographics | ✅ Present |
-| `cqr009` | Child sex | ✅ Present |
-| `cqr002` | Parent sex | ✅ Present |
-| `cqr003` | Parent age | ✅ Present |
-| `cqr004` | Parent education | ✅ Present |
-| `cqfa001` | Marital status | ✅ Present |
-| `sq002___1` – `sq002___16` | Parent race (checkboxes) | ✅ Present |
-| `sq003` | Parent ethnicity (Hispanic) | ✅ Present |
-
-### Variables Missing from Smoke Test (IT Request Needed)
-
-| Variable | Used For | Impact |
-|---|---|---|
-| `pid` | Project identifier used in all output data frames | ❌ Script errors on every `select()` call |
-| `eq002` | Primary caregiver status (eligibility criterion 3) | ❌ `calculate_eligibility()` fails |
-| `eq003` | Parent age ≥19 check (eligibility criterion 1) | ❌ `calculate_eligibility()` fails |
-
-### Survey Module Column Name Mismatch (Code Fix Needed)
-
-The script expects short column names (`module_X_complete`) but REDCap returns full instrument names. This is a code-side fix, not an IT request.
-
-| Script Expects | Smoke Test Has |
+| Component | Result |
 |---|---|
-| `module_2_complete` | `module_2_family_information_complete` |
-| `module_3_complete` | `module_3_child_information_complete` |
-| `module_4_complete` | `module_4_home_learning_environment_complete` |
-| `module_5_complete` | `module_5_birthdate_confirmation_complete` |
-| `module_6_complete` | 8 age-band variants: `module_6_0_89_complete` through `module_6_1097_2191_complete` |
-| `module_7_complete` | `module_7_child_emotions_and_relationships_complete` |
-| `module_9_complete` | `module_9_compensation_information_complete` |
+| REDCap API connection | ✅ 20 records, 62 columns retrieved |
+| Data transforms | ✅ All demographic derivations succeed |
+| Eligibility | ✅ 17 eligible, 3 not eligible |
+| Screener status | ✅ 20 complete, 0 incomplete |
+| Survey completion | ✅ 12 complete, 8 incomplete |
+| Child demographics | ✅ 20 records |
+| Parent demographics | ✅ 20 records |
+
+### Running the Smoke Test
+
+Run `smoke-test.R` from the repository root. **You must update the `csv_path` in `smoke-test.R` to point to your local copy of the API credentials CSV.**
+
+### Resolved Issues
+
+- ~~`pid` missing from REDCap data~~ — now derived from credentials CSV
+- ~~`eq002`, `eq003` missing~~ — added to API export by IT
+- ~~Survey module column name mismatch~~ — code updated to use actual REDCap instrument names, including module 6 age-band sub-instruments
 
 ### To Resolve
 
-1. **IT request**: Add `pid`, `eq002`, and `eq003` to the API export for the smoke test project
-2. **Code fix**: Update survey completion logic to match actual REDCap column names (especially module 6 age-band structure)
-3. **Template migration**: Update `[MN26 TODO]` markers once MN26 data dictionary is finalized
+1. **Template migration**: Update `[MN26 TODO]` markers once MN26 data dictionary is finalized
 
 ## Quick Start
 

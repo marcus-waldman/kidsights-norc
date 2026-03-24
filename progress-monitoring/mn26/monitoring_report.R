@@ -150,27 +150,65 @@ calculate_survey_completion <- function(data) {
 
   message("Calculating survey completion status...")
 
+  # Required module completion columns (actual REDCap instrument names)
   # [MN26 TODO] Update module list to match MN26 survey structure
-  required_modules <- paste0("module_", c(2, 3, 4, 5, 6, 7, 9), "_complete")
-  available_modules <- intersect(required_modules, names(data))
+  required_modules <- c(
+    "module_2_family_information_complete",
+    "module_3_child_information_complete",
+    "module_4_home_learning_environment_complete",
+    "module_5_birthdate_confirmation_complete",
+    "module_7_child_emotions_and_relationships_complete",
+    "module_9_compensation_information_complete"
+  )
+  # Module 6 has age-band sub-instruments — one per child. A participant completes
+  # whichever sub-instrument matches their child's age range.
+  module_6_cols <- grep("^module_6_.*_complete$", names(data), value = TRUE)
 
-  if (length(available_modules) == 0) {
+  available_modules <- intersect(required_modules, names(data))
+  available_module_6 <- intersect(module_6_cols, names(data))
+
+  all_available <- c(available_modules, available_module_6)
+
+  if (length(all_available) == 0) {
     warning("No module completion fields found in data. Survey completion cannot be determined.")
     return(data %>%
              dplyr::select(pid, record_id) %>%
              dplyr::mutate(survey_complete = NA, survey_status = "Unknown"))
   }
 
-  # Module numbers in order for "last complete" tracking
-  # [MN26 TODO] Update module numbers to match MN26 survey structure
-  module_numbers <- c(2, 3, 4, 5, 6, 7, 9)
-  n_required <- length(available_modules)
+  # Module labels for "last complete" tracking (in survey order)
+  module_labels <- c(
+    "module_2_family_information_complete" = "Module 2",
+    "module_3_child_information_complete" = "Module 3",
+    "module_4_home_learning_environment_complete" = "Module 4",
+    "module_5_birthdate_confirmation_complete" = "Module 5",
+    "module_7_child_emotions_and_relationships_complete" = "Module 7",
+    "module_9_compensation_information_complete" = "Module 9"
+  )
+  # Number of required modules: the non-module-6 modules + 1 for module 6
+  n_required <- length(available_modules) + ifelse(length(available_module_6) > 0, 1, 0)
 
+  # Collapse module 6 age-band columns: complete if any sub-instrument == 2
   completion_df <- data %>%
-    dplyr::select(pid, record_id, dplyr::all_of(available_modules)) %>%
+    dplyr::select(pid, record_id, dplyr::all_of(all_available))
+
+  if (length(available_module_6) > 0) {
+    completion_df$module_6_complete <- apply(
+      completion_df[, available_module_6, drop = FALSE], 1,
+      function(x) ifelse(any(x == 2, na.rm = TRUE), 2, NA_real_)
+    )
+  }
+
+  # Columns to count for completion (non-module-6 + collapsed module 6)
+  count_cols <- available_modules
+  if (length(available_module_6) > 0) {
+    count_cols <- c(count_cols, "module_6_complete")
+  }
+
+  completion_df <- completion_df %>%
     dplyr::rowwise() %>%
     dplyr::mutate(
-      modules_complete = sum(dplyr::c_across(dplyr::all_of(available_modules)) == 2, na.rm = TRUE),
+      modules_complete = sum(dplyr::c_across(dplyr::all_of(count_cols)) == 2, na.rm = TRUE),
       pct_complete = round(modules_complete / n_required * 100, 1),
       survey_complete = (modules_complete == n_required),
       survey_status = ifelse(survey_complete, "Complete", "Incomplete")
@@ -178,12 +216,27 @@ calculate_survey_completion <- function(data) {
     dplyr::ungroup()
 
   # Determine last completed module per participant
-  # Walk modules in order; the last one with status == 2 is the "last complete"
+  # Walk modules in survey order; the last one with status == 2 is the "last complete"
+  ordered_cols <- c(
+    intersect(names(module_labels), available_modules)[1:min(4, length(available_modules))],
+    if (length(available_module_6) > 0) "module_6_complete",
+    intersect(names(module_labels), available_modules)[available_modules %in%
+      c("module_7_child_emotions_and_relationships_complete",
+        "module_9_compensation_information_complete")]
+  )
+  ordered_labels <- c(
+    module_labels[intersect(names(module_labels), available_modules)[1:min(4, length(available_modules))]],
+    if (length(available_module_6) > 0) c("module_6_complete" = "Module 6"),
+    module_labels[intersect(names(module_labels), available_modules)[available_modules %in%
+      c("module_7_child_emotions_and_relationships_complete",
+        "module_9_compensation_information_complete")]]
+  )
+
   last_module <- rep(NA_character_, nrow(completion_df))
-  for (j in seq_along(available_modules)) {
-    col <- available_modules[j]
+  for (j in seq_along(ordered_cols)) {
+    col <- ordered_cols[j]
     is_complete <- !is.na(completion_df[[col]]) & completion_df[[col]] == 2
-    last_module[is_complete] <- paste0("Module ", module_numbers[j])
+    last_module[is_complete] <- ordered_labels[j]
   }
   completion_df$last_module_complete <- last_module
 

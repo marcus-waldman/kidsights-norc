@@ -73,7 +73,8 @@ pull_redcap_data <- function(credentials, redcap_url) {
 
     # Add source project metadata
     project_data <- result$data %>%
-      dplyr::mutate(source_project = project_name)
+      dplyr::mutate(source_project = project_name,
+                    pid = credentials$pid[i])
 
     all_data[[project_name]] <- project_data
 
