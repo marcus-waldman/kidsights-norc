@@ -16,7 +16,7 @@ format:
 
 Data dictionary for the 6 data frames returned by `generate_monitoring_report()`.
 
-Each row in every data frame represents one REDCap record, identified by `pid` + `record_id`.
+Each row in every data frame represents one participant, uniquely identified by the combination of `pid` + `record_id`. Neither `pid` nor `record_id` is unique on its own — `pid` identifies the REDCap project and `record_id` is unique only within a project.
 
 ::: {.callout-note}
 Variables with a `_norc` suffix use MN26 NORC value codes that differ from the NE25 pipeline.
@@ -31,7 +31,7 @@ Tracks whether eligibility has been determined for each participant.
 | Column | Source Variable | Type | Description | Values |
 |--------|----------------|------|-------------|--------|
 | `pid` | `pid` (from credentials CSV) | integer | REDCap project ID | Project-specific integer |
-| `record_id` | `record_id` | numeric | REDCap record ID | Unique per record |
+| `record_id` | `record_id` | numeric | REDCap record ID | Unique within project |
 | `screener_complete` | Derived | logical | Whether eligibility is known (non-missing) | `TRUE`, `FALSE` |
 | `screener_status` | Derived from `screener_complete` | character | Label for screener completion | `"Complete"`, `"Incomplete"` |
 
@@ -53,7 +53,7 @@ Four eligibility criteria and overall eligibility determination.
 | Column | Source Variable | Type | Description | Values |
 |--------|----------------|------|-------------|--------|
 | `pid` | `pid` | integer | REDCap project ID | Project-specific integer |
-| `record_id` | `record_id` | numeric | REDCap record ID | Unique per record |
+| `record_id` | `record_id` | numeric | REDCap record ID | Unique within project |
 | `parent_age_eligible` | `eq003` | logical | Parent age >= 19 | `TRUE`, `FALSE` |
 | `child_age_eligible` | `age_in_days_n` | logical | Child age 0--5 years | `TRUE`, `FALSE` |
 | `primary_caregiver_eligible` | `eq002` | logical | Respondent is primary caregiver | `TRUE`, `FALSE` |
@@ -99,7 +99,7 @@ Module-by-module completion tracking with per-participant denominator.
 | Column | Source Variable | Type | Description | Values |
 |--------|----------------|------|-------------|--------|
 | `pid` | `pid` | integer | REDCap project ID | Project-specific integer |
-| `record_id` | `record_id` | numeric | REDCap record ID | Unique per record |
+| `record_id` | `record_id` | numeric | REDCap record ID | Unique within project |
 | `n_required` | Derived | integer | Per-participant required module count | 7--11 |
 | `modules_complete` | Derived | integer | Count of completed modules | 0 to `n_required` |
 | `pct_complete` | Derived | numeric | Percentage of modules complete | 0 to 100 |
@@ -152,7 +152,7 @@ Age, sex, and race/ethnicity for child 1 and child 2.
 | Column | Source Variable | Type | Description | Values |
 |--------|----------------|------|-------------|--------|
 | `pid` | `pid` | integer | REDCap project ID | Project-specific integer |
-| `record_id` | `record_id` | numeric | REDCap record ID | Unique per record |
+| `record_id` | `record_id` | numeric | REDCap record ID | Unique within project |
 | `age_years` | `age_in_days_n` | numeric | Child 1 age in years | 0--5 (continuous) |
 | `sex_norc` | `cqr009` | character | Child 1 sex | `"Female"`, `"Male"` |
 | `race_norc` | `cqr010b___*` | character | Child 1 race | See mapping below |
@@ -242,7 +242,7 @@ Demographics for the primary caregiver (respondent).
 | Column | Source Variable | Type | Description | Values |
 |--------|----------------|------|-------------|--------|
 | `pid` | `pid` | integer | REDCap project ID | Project-specific integer |
-| `record_id` | `record_id` | numeric | REDCap record ID | Unique per record |
+| `record_id` | `record_id` | numeric | REDCap record ID | Unique within project |
 | `age_years` | `cqr003` | numeric | Parent age in years | Continuous |
 | `gender` | `mn2` | character | Parent gender | `"Female"`, `"Male"`, `"Non-binary"` |
 | `race_ethnicity` | `sq002b___*` + `sq003` | character | Combined race/ethnicity | See mapping below |
@@ -359,7 +359,7 @@ Gift card and contact information from Module 9.
 | Column | Source Variable | Type | Description | Values |
 |--------|----------------|------|-------------|--------|
 | `pid` | `pid` | integer | REDCap project ID | Project-specific integer |
-| `record_id` | `record_id` | numeric | REDCap record ID | Unique per record |
+| `record_id` | `record_id` | numeric | REDCap record ID | Unique within project |
 | `store_choice_label` | `store_choice` | character | Gift card store choice | See mapping below |
 | `q1394` | `q1394` | character | Participant first name | Free text |
 | `q1394a` | `q1394a` | character | Participant last name | Free text |

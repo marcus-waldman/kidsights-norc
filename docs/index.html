@@ -2348,7 +2348,7 @@ window.Quarto = {
 
 
 <p>Data dictionary for the 6 data frames returned by <code>generate_monitoring_report()</code>.</p>
-<p>Each row in every data frame represents one REDCap record, identified by <code>pid</code> + <code>record_id</code>.</p>
+<p>Each row in every data frame represents one participant, uniquely identified by the combination of <code>pid</code> + <code>record_id</code>. Neither <code>pid</code> nor <code>record_id</code> is unique on its own — <code>pid</code> identifies the REDCap project and <code>record_id</code> is unique only within a project.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -2397,7 +2397,7 @@ Note
 <td><code>record_id</code></td>
 <td>numeric</td>
 <td>REDCap record ID</td>
-<td>Unique per record</td>
+<td>Unique within project</td>
 </tr>
 <tr class="odd">
 <td><code>screener_complete</code></td>
@@ -2460,7 +2460,7 @@ Note
 <td><code>record_id</code></td>
 <td>numeric</td>
 <td>REDCap record ID</td>
-<td>Unique per record</td>
+<td>Unique within project</td>
 </tr>
 <tr class="odd">
 <td><code>parent_age_eligible</code></td>
@@ -2577,7 +2577,7 @@ Tip
 <td><code>record_id</code></td>
 <td>numeric</td>
 <td>REDCap record ID</td>
-<td>Unique per record</td>
+<td>Unique within project</td>
 </tr>
 <tr class="odd">
 <td><code>n_required</code></td>
@@ -2765,7 +2765,7 @@ Tip
 <td><code>record_id</code></td>
 <td>numeric</td>
 <td>REDCap record ID</td>
-<td>Unique per record</td>
+<td>Unique within project</td>
 </tr>
 <tr class="odd">
 <td><code>age_years</code></td>
@@ -3024,7 +3024,7 @@ Tip
 <td><code>record_id</code></td>
 <td>numeric</td>
 <td>REDCap record ID</td>
-<td>Unique per record</td>
+<td>Unique within project</td>
 </tr>
 <tr class="odd">
 <td><code>age_years</code></td>
@@ -3344,7 +3344,7 @@ Tip
 <td><code>record_id</code></td>
 <td>numeric</td>
 <td>REDCap record ID</td>
-<td>Unique per record</td>
+<td>Unique within project</td>
 </tr>
 <tr class="odd">
 <td><code>store_choice_label</code></td>
