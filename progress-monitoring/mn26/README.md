@@ -138,7 +138,22 @@ That's it!
 - `utils/redcap_utils.R` - REDCap API functions including `get_data_dictionary()`
 - `utils/data_transforms.R` - Data transformation functions (value labeling)
 - `utils/safe_joins.R` - Safe join utilities
-- `docs/monitoring_data_dictionary.qmd` - Data dictionary for monitoring output
+- `docs/monitoring_data_dictionary.qmd` - Data dictionary source (Quarto)
+- `docs/monitoring_data_dictionary.html` - Data dictionary (rendered HTML)
+
+### Data Dictionary on GitHub Pages
+
+The data dictionary is published at **https://marcus-waldman.github.io/kidsights-norc/**.
+
+After editing and re-rendering the `.qmd` source, update the GitHub Pages site:
+
+```bash
+cd progress-monitoring/mn26/docs
+quarto render monitoring_data_dictionary.qmd
+cp monitoring_data_dictionary.html ../../../docs/index.html
+```
+
+Then commit and push both files.
 
 ## Quick Start
 
