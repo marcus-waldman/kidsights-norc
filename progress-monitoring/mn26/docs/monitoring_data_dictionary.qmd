@@ -1,0 +1,362 @@
+---
+title: "MN26 Monitoring Data Dictionary"
+subtitle: "Variable definitions for `generate_monitoring_report()` output"
+date: last-modified
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
+    theme: cosmo
+    code-fold: true
+    df-print: kable
+---
+
+Data dictionary for the 6 data frames returned by `generate_monitoring_report()`.
+
+Each row in every data frame represents one REDCap record, identified by `pid` + `record_id`.
+
+::: {.callout-note}
+Variables with a `_norc` suffix use MN26 NORC value codes that differ from the NE25 pipeline.
+:::
+
+## `$screener_status`
+
+Tracks whether eligibility has been determined for each participant.
+
+### Columns
+
+| Column | Source Variable | Type | Description | Values |
+|--------|----------------|------|-------------|--------|
+| `pid` | `pid` (from credentials CSV) | integer | REDCap project ID | Project-specific integer |
+| `record_id` | `record_id` | numeric | REDCap record ID | Unique per record |
+| `screener_complete` | Derived | logical | Whether eligibility is known (non-missing) | `TRUE`, `FALSE` |
+| `screener_status` | Derived from `screener_complete` | character | Label for screener completion | `"Complete"`, `"Incomplete"` |
+
+: {.striped .hover}
+
+### Derivation
+
+- `screener_complete`: `TRUE` if all 4 eligibility criteria have been answered (non-NA)
+- `screener_status`: `"Complete"` when `screener_complete == TRUE`, otherwise `"Incomplete"`
+
+{{< pagebreak >}}
+
+## `$eligibility`
+
+Four eligibility criteria and overall eligibility determination.
+
+### Columns
+
+| Column | Source Variable | Type | Description | Values |
+|--------|----------------|------|-------------|--------|
+| `pid` | `pid` | integer | REDCap project ID | Project-specific integer |
+| `record_id` | `record_id` | numeric | REDCap record ID | Unique per record |
+| `parent_age_eligible` | `eq003` | logical | Parent age >= 19 | `TRUE`, `FALSE` |
+| `child_age_eligible` | `age_in_days_n` | logical | Child age 0--5 years | `TRUE`, `FALSE` |
+| `primary_caregiver_eligible` | `eq002` | logical | Respondent is primary caregiver | `TRUE`, `FALSE` |
+| `state_eligible` | `mn_eqstate` | logical | Lives in Minnesota | `TRUE`, `FALSE` |
+| `eligible` | Derived | logical | Overall eligibility (all 4 criteria) | `TRUE`, `FALSE` |
+
+: {.striped .hover}
+
+### Variable Mappings
+
+**`parent_age_eligible`** from `eq003` (yesno)
+
+:   `eq003 == 1` AND not missing $\rightarrow$ `TRUE`; otherwise $\rightarrow$ `FALSE`
+
+**`child_age_eligible`** from `age_in_days_n` (calculated field)
+
+:   `age_in_days_n <= 1825` (5 years) AND not missing $\rightarrow$ `TRUE`; otherwise $\rightarrow$ `FALSE`
+
+**`primary_caregiver_eligible`** from `eq002` (yesno)
+
+:   `eq002 == 1` AND not missing $\rightarrow$ `TRUE`; otherwise $\rightarrow$ `FALSE`
+
+**`state_eligible`** from `mn_eqstate` (yesno)
+
+:   `mn_eqstate == 1` AND not missing $\rightarrow$ `TRUE`; otherwise $\rightarrow$ `FALSE`
+
+::: {.callout-tip}
+NE25 used `eqstate` (Nebraska residence); MN26 uses `mn_eqstate` (Minnesota residence).
+:::
+
+**`eligible`**
+
+:   `parent_age_eligible & child_age_eligible & primary_caregiver_eligible & state_eligible`
+
+{{< pagebreak >}}
+
+## `$survey_completion`
+
+Module-by-module completion tracking.
+
+### Columns
+
+| Column | Source Variable | Type | Description | Values |
+|--------|----------------|------|-------------|--------|
+| `pid` | `pid` | integer | REDCap project ID | Project-specific integer |
+| `record_id` | `record_id` | numeric | REDCap record ID | Unique per record |
+| `modules_complete` | Derived | integer | Count of completed modules | 0 to N |
+| `pct_complete` | Derived | numeric | Percentage of modules complete | 0 to 100 |
+| `last_module_complete` | Derived | character | Name of last completed module | Module name or `"None"` |
+| `survey_complete` | Derived | logical | All required modules complete | `TRUE`, `FALSE` |
+| `survey_status` | Derived | character | Label for survey completion | `"Complete"`, `"Incomplete"` |
+
+: {.striped .hover}
+
+### Derivation
+
+- A module is "complete" when its REDCap instrument status = 2
+- `survey_complete`: `TRUE` when all required modules have status = 2
+
+::: {.callout-warning}
+**`pct_complete` is currently incorrect.** The required module list is carried over from NE25 and does not match MN26. Specifically: Module 4 (Home Learning Environment) does not exist in MN26 and is silently dropped, `nsch_questions` is new in MN26 but not included, and child 2 modules (`module_6_*_2`, `nsch_questions_2`) are unaccounted for. See [GitHub Issue #1](https://github.com/marcus-waldman/kidsights-norc/issues/1) for the full list of questions that need resolving before this data frame is reliable.
+:::
+
+{{< pagebreak >}}
+
+## `$child_demographics`
+
+Age, sex, and race/ethnicity for child 1 and child 2.
+
+### Columns
+
+| Column | Source Variable | Type | Description | Values |
+|--------|----------------|------|-------------|--------|
+| `pid` | `pid` | integer | REDCap project ID | Project-specific integer |
+| `record_id` | `record_id` | numeric | REDCap record ID | Unique per record |
+| `age_years` | `age_in_days_n` | numeric | Child 1 age in years | 0--5 (continuous) |
+| `sex_norc` | `cqr009` | character | Child 1 sex | `"Female"`, `"Male"` |
+| `race_norc` | `cqr010b___*` | character | Child 1 race | See mapping below |
+| `hisp` | `cqr011` | character | Child 1 Hispanic/Latino ethnicity | `"Hispanic"`, `"non-Hisp."` |
+| `raceG_norc` | Derived | character | Child 1 combined race/ethnicity | See mapping below |
+| `years_old_c2` | `age_in_days_c2_n` | numeric | Child 2 age in years | 0--5, `NA` if no child 2 |
+| `sex_c2_norc` | `cqr009_c2` | character | Child 2 sex | `"Female"`, `"Male"`, `NA` if no child 2 |
+| `race_c2_norc` | `cqr010_c2b___*` | character | Child 2 race | Same categories as child 1 |
+| `hisp_c2` | `cqr011_c2` | character | Child 2 Hispanic/Latino ethnicity | `"Hispanic"`, `"non-Hisp."` |
+| `raceG_c2_norc` | Derived | character | Child 2 combined race/ethnicity | Same categories as child 1 |
+
+: {.striped .hover}
+
+### Variable Mappings
+
+#### Age
+
+`age_years` = `age_in_days_n / 365.25`
+
+::: {.callout-tip}
+NE25 used `age_in_days`; MN26 uses `age_in_days_n` (child 1) and `age_in_days_c2_n` (child 2).
+:::
+
+#### Sex
+
+`sex_norc` from `cqr009` (radio). Child 2 `sex_c2_norc` from `cqr009_c2` uses the same codes.
+
+| REDCap Code | Label |
+|:-----------:|-------|
+| 1 | Female |
+| 0 | Male |
+
+: {.striped .hover}
+
+::: {.callout-important}
+Codes are **swapped** from NE25 (NE25: 0=Female, 1=Male).
+:::
+
+#### Race
+
+`race_norc` from `cqr010b` (checkbox, check all that apply). Child 2 `race_c2_norc` from `cqr010_c2b___*` uses the same codes.
+
+| REDCap Code | Checkbox Field | Label |
+|:-----------:|----------------|-------|
+| 100 | `cqr010b___100` | American Indian or Alaska Native |
+| 101 | `cqr010b___101` | Asian |
+| 102 | `cqr010b___102` | Black or African American |
+| 103 | `cqr010b___103` | Native Hawaiian or Other Pacific Islander |
+| 104 | `cqr010b___104` | White |
+| 105 | `cqr010b___105` | Other |
+
+: {.striped .hover}
+
+- If multiple checkboxes selected $\rightarrow$ `"Two or More"`
+- If no checkboxes selected $\rightarrow$ `NA`
+
+::: {.callout-tip}
+NE25 used `cqr010___*` with 15 granular categories; MN26 uses `cqr010b___*` with 6 pre-collapsed categories.
+:::
+
+#### Ethnicity
+
+`hisp` from `cqr011` (radio). Child 2 `hisp_c2` from `cqr011_c2` uses the same codes.
+
+| REDCap Code | Label |
+|:-----------:|-------|
+| 0 | non-Hisp. |
+| 1 | Hispanic |
+
+: {.striped .hover}
+
+#### Combined Race/Ethnicity
+
+`raceG_norc` derived from `race_norc` + `hisp`:
+
+- If `hisp == "Hispanic"` $\rightarrow$ `"Hispanic"`
+- Otherwise $\rightarrow$ `"{race_norc}, non-Hisp."` (e.g., `"White, non-Hisp."`)
+
+{{< pagebreak >}}
+
+## `$parent_demographics`
+
+Demographics for the primary caregiver (respondent).
+
+### Columns
+
+| Column | Source Variable | Type | Description | Values |
+|--------|----------------|------|-------------|--------|
+| `pid` | `pid` | integer | REDCap project ID | Project-specific integer |
+| `record_id` | `record_id` | numeric | REDCap record ID | Unique per record |
+| `age_years` | `cqr003` | numeric | Parent age in years | Continuous |
+| `gender` | `mn2` | character | Parent gender | `"Female"`, `"Male"`, `"Non-binary"` |
+| `race_ethnicity` | `sq002b___*` + `sq003` | character | Combined race/ethnicity | See mapping below |
+| `education` | `cqr004` | character | Education level | See mapping below |
+| `marital_status_label_norc` | `cqfa001` | character | Marital status | See mapping below |
+
+: {.striped .hover}
+
+### Variable Mappings
+
+#### Gender
+
+`gender` (`a1_gender_norc`) from `mn2` (radio):
+
+| REDCap Code | Label |
+|:-----------:|-------|
+| 0 | Female |
+| 1 | Male |
+| 97 | Non-binary |
+
+: {.striped .hover}
+
+::: {.callout-tip}
+NE25 used `cqr002` (binary sex: 0=Female, 1=Male); MN26 uses `mn2` (gender with Non-binary option).
+:::
+
+#### Race/Ethnicity
+
+`race_ethnicity` (`a1_raceG_norc`) from `sq002b___*` + `sq003`.
+
+**Race checkboxes** (`sq002b`, check all that apply):
+
+| REDCap Code | Checkbox Field | Label |
+|:-----------:|----------------|-------|
+| 100 | `sq002b___100` | American Indian or Alaska Native |
+| 101 | `sq002b___101` | Asian |
+| 102 | `sq002b___102` | Black or African American |
+| 103 | `sq002b___103` | Native Hawaiian or Other Pacific Islander |
+| 104 | `sq002b___104` | White |
+| 105 | `sq002b___105` | Other |
+
+: {.striped .hover}
+
+- If multiple checkboxes selected $\rightarrow$ `"Two or More"`
+- If no checkboxes selected $\rightarrow$ `NA`
+
+**Ethnicity** (`sq003`, radio):
+
+| REDCap Code | Label |
+|:-----------:|-------|
+| 0 | non-Hisp. |
+| 1 | Hispanic |
+
+: {.striped .hover}
+
+**Combined `race_ethnicity`:**
+
+- If Hispanic $\rightarrow$ `"Hispanic"`
+- Otherwise $\rightarrow$ `"{race}, non-Hisp."` (e.g., `"White, non-Hisp."`)
+
+::: {.callout-tip}
+NE25 used `sq002___*` with 15 granular categories; MN26 uses `sq002b___*` with 6 pre-collapsed categories.
+:::
+
+#### Education
+
+`education` (`educ_a1_norc`) from `cqr004` (radio):
+
+| REDCap Code | Label |
+|:-----------:|-------|
+| 0 | 8th grade or less |
+| 1 | 9th-12th grade, No diploma |
+| 2 | High School Graduate or GED |
+| 3 | Vocational/Trade/Business school |
+| 4 | Some College, no degree |
+| 5 | Associate Degree |
+| 6 | Bachelor's Degree |
+| 7 | Master's Degree |
+| 8 | Doctorate or Professional Degree |
+
+: {.striped .hover}
+
+::: {.callout-tip}
+NE25 used codes 1--8 with slightly different labels; MN26 uses codes 0--8.
+:::
+
+#### Marital Status
+
+`marital_status_label_norc` from `cqfa001` (radio):
+
+| REDCap Code | Label |
+|:-----------:|-------|
+| 0 | Married |
+| 1 | Not married, but living with a partner |
+| 2 | Never Married |
+| 3 | Divorced |
+| 4 | Separated |
+| 5 | Widowed |
+
+: {.striped .hover}
+
+::: {.callout-tip}
+NE25 used codes 1--6; MN26 uses codes 0--5.
+:::
+
+{{< pagebreak >}}
+
+## `$compensation_information`
+
+Gift card and contact information from Module 9.
+
+### Columns
+
+| Column | Source Variable | Type | Description | Values |
+|--------|----------------|------|-------------|--------|
+| `pid` | `pid` | integer | REDCap project ID | Project-specific integer |
+| `record_id` | `record_id` | numeric | REDCap record ID | Unique per record |
+| `store_choice_label` | `store_choice` | character | Gift card store choice | See mapping below |
+| `q1394` | `q1394` | character | Participant first name | Free text |
+| `q1394a` | `q1394a` | character | Participant last name | Free text |
+| `email_incentive` | `email_incentive` | character | Participant email address | Free text |
+
+: {.striped .hover}
+
+::: {.callout-warning}
+This data frame contains **PII** (names and email). Handle according to data governance policies.
+:::
+
+### Variable Mappings
+
+#### Store Choice
+
+`store_choice_label` from `store_choice` (dropdown):
+
+| REDCap Code | Label |
+|:-----------:|-------|
+| 1 | Lowe's |
+| 2 | Amazon |
+| 3 | Walmart |
+| 4 | Target |
+
+: {.striped .hover}

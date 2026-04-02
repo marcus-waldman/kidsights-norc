@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This repository contains sample monitoring tools for NORC researchers tracking the Minnesota 2026 (MN26) study recruitment progress and demographic distribution. The codebase is currently using Nebraska 2025 (NE25) data as a template and will need to be adapted once MN26 data collection begins.
+This repository contains sample monitoring tools for NORC researchers tracking the Minnesota 2026 (MN26) study recruitment progress and demographic distribution. The codebase has been updated for MN26 NORC field names and value codes. Variables with `_norc` suffix indicate MN26-specific coding that differs from the NE25 pipeline.
 
 ## Key Commands
 
@@ -19,12 +19,6 @@ source("progress-monitoring/mn26/monitoring_report.R")
 # Generate monitoring report
 monitoring_data <- generate_monitoring_report(
   csv_path = "C:/path/to/your/mn26_redcap_api.csv"
-)
-
-# Optional: specify Minnesota REDCap URL
-monitoring_data <- generate_monitoring_report(
-  csv_path = "C:/path/to/your/mn26_api.csv",
-  redcap_url = "https://redcap.umn.edu/api/"
 )
 ```
 
@@ -59,43 +53,59 @@ The monitoring system is organized into modular utility functions:
 
 The script implements 4 eligibility criteria:
 1. Parent age ≥19 (`eq003 == 1`)
-2. Child age 0-5 years (`age_in_days ≤ 1825`)
+2. Child age 0-5 years (`age_in_days_n ≤ 1825`)
 3. Primary caregiver status (`eq002 == 1`)
-4. State residence - Minnesota for MN26, Nebraska for NE25 template (`eqstate == 1`)
+4. Minnesota residence (`mn_eqstate == 1`)
 
 Screener is "complete" when eligibility is known (non-missing).
 
 ### Survey Completion
 
-Survey is "complete" when all required modules have REDCap status = 2. Currently uses NE25 module list: 2, 3, 4, 5, 6, 7, 9 (excludes module 8 follow-up).
+Survey is "complete" when all required modules have REDCap status = 2. [MN26 TODO] Module list needs verification for MN26 survey structure.
 
-## Important Notes for MN26 Migration
+## MN26 Variable Mapping (from NE25)
 
-### Variable Name Updates Required
+### Changed Variable Names
+| Purpose | NE25 | MN26 |
+|---------|------|------|
+| Child 1 age | `age_in_days` | `age_in_days_n` |
+| Child 2 age | N/A | `age_in_days_c2_n` |
+| Parent gender | `cqr002` | `mn2` |
+| State eligibility | `eqstate` | `mn_eqstate` |
+| Parent race | `sq002___*` | `sq002b___*` (codes 100-105) |
+| Child race | `cqr010___*` | `cqr010b___*` (codes 100-105) |
 
-Search for `[MN26 TODO]` comments throughout the code. Key areas:
+### Changed Value Codes
+| Variable | NE25 | MN26 |
+|----------|------|------|
+| Child sex (`cqr009`) | 0=Female, 1=Male | 1=Female, 0=Male |
+| Education (`cqr004`) | 1-8 | 0-8 |
+| Marital status (`cqfa001`) | 1-6 | 0-5 |
+| Parent gender (`mn2`) | N/A | 0=Female, 1=Male, 97=Non-binary |
 
-1. **REDCap URL** - Update to Minnesota REDCap instance
-2. **Eligibility variables** - Verify `eq001`, `eq002`, `eq003`, `eqstate`, `age_in_days` match MN26 data dictionary
-3. **Demographics variables** - Verify `cqr009` (child sex), `cqr002` (parent sex), `cqr003` (parent age), `cqr004` (education), `cqfa001` (marital status), `sq002_*` (race checkboxes), `sq003` (ethnicity)
-4. **Module list** - Update survey completion module numbers to match MN26 questionnaire structure
-5. **State code** - Change from Nebraska (1) to Minnesota state code in `eqstate` eligibility check
-6. **Age cutoff** - MN26 uses 1825 days (5 years) vs NE25's 2191 days (6 years)
+### Derived Variables (_norc suffix)
+- `sex_norc`, `sex_c2_norc` — Child sex with MN26 codes
+- `a1_gender_norc` — Parent gender (replaces `female_a1`)
+- `educ_a1_norc` — Education with MN26 codes
+- `marital_status_label_norc` — Marital status with MN26 codes
+- `a1_race_norc`, `a1_raceG_norc` — Parent race/ethnicity
+- `race_norc`, `raceG_norc` — Child 1 race/ethnicity
+- `race_c2_norc`, `raceG_c2_norc` — Child 2 race/ethnicity
+- `store_choice_label` — Gift card store (Lowe's/Amazon/Walmart/Target)
+
+### Remaining [MN26 TODO] Items
+- Survey completion module list verification
+- Multi-child eligibility checking (per-child age check)
+- Geography/geocoding integration
 
 ### Multi-Child Households
 
-MN26 allows up to 2 children per household (unlike NE25's 1 child). The child demographics and eligibility logic must be updated to:
-- Pivot to long format (1 row per child)
-- Add `child_number` column (1 or 2)
-- Check eligibility per child
-
-REDCap structure (repeating instruments vs. separate fields) will determine implementation approach.
+MN26 allows up to 2 children per household (unlike NE25's 1 child). Child 2 variables use separate columns with `_c2` suffix. REDCap uses separate fields (not repeating instruments).
 
 ### Security and Data Management
 
 - **API credentials CSV** - Store securely outside repository (e.g., `C:/Users/USERNAME/my-APIs/`)
 - **Never commit API tokens** - `.gitignore` excludes files with "api" in name
-- **Minimal variable access** - Script requires only 28 raw REDCap variables (see README.md for list)
 - **No PHI in git** - Repository contains no protected health information
 
 ### Self-Contained Design
@@ -113,8 +123,8 @@ The `generate_monitoring_report()` function returns a list with 5 data frames:
 1. **`$screener_status`** - Eligibility determination status (complete/incomplete)
 2. **`$eligibility`** - Four eligibility criteria + overall eligibility boolean
 3. **`$survey_completion`** - Module completion tracking with percentage and last completed module
-4. **`$child_demographics`** - Age (years) and sex
-5. **`$parent_demographics`** - Age, sex, race/ethnicity, education, marital status
+4. **`$child_demographics`** - Age, sex, race/ethnicity for child 1 (and child 2 if present)
+5. **`$parent_demographics`** - Age, gender, race/ethnicity, education, marital status
 
 ## Contact
 

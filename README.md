@@ -29,7 +29,7 @@ This repository provides standalone R scripts that connect to REDCap via API to 
 
 ### Running the Smoke Test
 
-Run `smoke-test.R` from the repository root. **You must update the `csv_path` in `smoke-test.R` to point to your local copy of the API credentials CSV.**
+Run `progress-monitoring/mn26/smoke-test.R`. **You must update the `csv_path` in `smoke-test.R` to point to your local copy of the API credentials CSV.**
 
 ### Resolved Issues
 
@@ -122,25 +122,25 @@ The script returns 5 data frames:
 
 ## Required REDCap Variables
 
-The monitoring script requires access to **28 raw REDCap variables** through the API:
+The monitoring script requires access to raw REDCap variables through the API:
 
 - **Identifiers**: `pid`, `record_id`
-- **Eligibility screening**: `eq001`, `eq002`, `eq003`, `eqstate`, `age_in_days`
+- **Eligibility screening**: `eq001`, `eq002`, `eq003`, `mn_eqstate`, `age_in_days_n`
 - **Survey completion**: `module_2_complete` through `module_9_complete`
-- **Child demographics**: `age_in_days`, `cqr009`
-- **Parent demographics**: `cqr002`, `cqr003`, `cqr004`, `sq002___*` (race checkboxes), `sq003`, `cqfa001`
+- **Child 1 demographics**: `age_in_days_n`, `cqr009`, `cqr010b___*` (race checkboxes), `cqr011`
+- **Child 2 demographics**: `age_in_days_c2_n`, `cqr009_c2`, `cqr010_c2b___*` (race checkboxes), `cqr011_c2`
+- **Parent demographics**: `mn2` (gender), `cqr003`, `cqr004`, `sq002b___*` (race checkboxes), `sq003`, `cqfa001`
+- **Compensation**: `store_choice`, `q1394`, `q1394a`, `email_incentive`
 
 See `progress-monitoring/mn26/README.md` for complete variable list and data governance details.
 
-## Adapting for MN26 Data
+## Remaining Migration Items
 
-When MN26 data collection begins, search for `[MN26 TODO]` comments to identify areas requiring updates:
+Search for `[MN26 TODO]` comments for items still needing updates:
 
-1. **REDCap URL** - Update to Minnesota REDCap instance
-2. **Variable names** - Verify against MN26 data dictionary
-3. **Module list** - Update to match MN26 survey structure
-4. **State code** - Change eligibility check from Nebraska to Minnesota
-5. **Multi-child handling** - MN26 allows up to 2 children per household
+1. **Module list** - Verify survey completion modules match MN26 structure ([#1](https://github.com/marcus-waldman/kidsights-norc/issues/1))
+2. **Multi-child eligibility** - Per-child age eligibility checking
+3. **Geography** - Geocoding integration for geographic monitoring
 
 ## Documentation
 

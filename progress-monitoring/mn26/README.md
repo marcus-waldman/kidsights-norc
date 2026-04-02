@@ -4,7 +4,7 @@ Scripts for NORC researchers to monitor Minnesota 2026 (MN26) study recruitment 
 
 ## Current Status
 
-**TEMPLATE MODE**: These scripts currently use **NE25 data as a template** to demonstrate functionality. Once MN26 data collection begins, variables will need to be updated (marked with `[MN26 TODO]` comments throughout the code).
+**MN26 MIGRATION IN PROGRESS**: Race/ethnicity and compensation transforms have been updated for MN26 NORC field names and value codes. Remaining `[MN26 TODO]` items (eligibility, survey modules, multi-child handling) will be updated as the MN26 data dictionary is finalized.
 
 ## Required REDCap API Access
 
@@ -18,8 +18,9 @@ Scripts for NORC researchers to monitor Minnesota 2026 (MN26) study recruitment 
 - `eq001` - Informed consent
 - `eq002` - Primary caregiver status
 - `eq003` - Parent/caregiver age (19+ years)
-- `eqstate` - State residence (Minnesota for MN26, Nebraska for NE25 template)
-- `age_in_days` - Child age in days (calculated from DOB by REDCap)
+- `mn_eqstate` - Minnesota residence
+- `age_in_days_n` - Child 1 age in days (calculated from DOB by REDCap)
+- `age_in_days_c2_n` - Child 2 age in days (if applicable)
 
 ### Survey Completion Status (Required)
 - `module_2_complete` - Module 2 completion status
@@ -32,48 +33,53 @@ Scripts for NORC researchers to monitor Minnesota 2026 (MN26) study recruitment 
 
 **Note:** Module list may change for MN26 depending on final questionnaire structure.
 
-### Child Demographics (Required)
-- `age_in_days` - Child age (already listed above)
-- `cqr009` - Child sex
+### Child 1 Demographics (Required)
+- `age_in_days_n` - Child age (already listed above)
+- `cqr009` - Child sex (1=Female, 0=Male — swapped from NE25)
+- `cqr010b` - Child race (checkbox, check all that apply):
+  - `cqr010b___100` (American Indian or Alaska Native), `___101` (Asian), `___102` (Black or African American), `___103` (Native Hawaiian or Other Pacific Islander), `___104` (White), `___105` (Other)
+- `cqr011` - Child Hispanic/Latino ethnicity (0=No, 1=Yes)
+
+### Child 2 Demographics (if applicable)
+- `age_in_days_c2_n` - Child 2 age (already listed above)
+- `cqr009_c2` - Child 2 sex (1=Female, 0=Male)
+- `cqr010_c2b` - Child 2 race (checkbox, same codes as child 1):
+  - `cqr010_c2b___100` through `___105`
+- `cqr011_c2` - Child 2 Hispanic/Latino ethnicity (0=No, 1=Yes)
 
 ### Parent/Caregiver Demographics (Required)
-- `cqr002` - Respondent sex/gender
+- `mn2` - Respondent gender (0=Female, 1=Male, 97=Non-binary) — replaces `cqr002`
 - `cqr003` - Respondent age in years
-- `cqr004` - Respondent education level (8 categories)
-- `sq002_*` - Respondent race (checkbox variables):
-  - `sq002___1` through `sq002___15` (all race checkbox fields)
-- `sq003` - Respondent Hispanic/Latino ethnicity
+- `cqr004` - Respondent education level (codes 0-8)
+- `sq002b` - Respondent race (checkbox, check all that apply):
+  - `sq002b___100` (American Indian or Alaska Native), `___101` (Asian), `___102` (Black or African American), `___103` (Native Hawaiian or Other Pacific Islander), `___104` (White), `___105` (Other)
+- `sq003` - Respondent Hispanic/Latino ethnicity (0=No, 1=Yes)
 - `cqfa001` - Marital status
 
-### Variable Count Summary
-- **Total raw variables needed:** 28 variables
-  - Identifiers: 2
-  - Eligibility: 5
-  - Survey completion: 7
-  - Child demographics: 2 (1 overlap with eligibility)
-  - Parent demographics: 19 (race checkboxes + 4 other demographics)
+### Compensation (Module 9)
+- `store_choice` - Gift card store choice (1=Lowe's, 2=Amazon, 3=Walmart, 4=Target)
+- `q1394` - First name
+- `q1394a` - Last name
+- `email_incentive` - Email address
 
-**[MN26 TODO]**: Verify these variable names match the MN26 REDCap data dictionary once finalized. Variable names may differ between studies.
+### Data Transformations
 
-### Important Note on Data Transformations
+The monitoring script includes built-in transforms in `utils/data_transforms.R` that convert raw REDCap variables to labeled/derived variables:
 
-The current monitoring script **assumes access to transformed/derived variables** (e.g., `years_old`, `sex`, `a1_raceG`, `educ_a1`) from the Kidsights transformation pipeline.
+1. **Child 1 age** (`age_in_days_n` → `years_old`)
+2. **Child 2 age** (`age_in_days_c2_n` → `years_old_c2`)
+3. **Child 1 sex** (`cqr009` → `sex_norc`: 1=Female, 0=Male — swapped from NE25)
+4. **Child 2 sex** (`cqr009_c2` → `sex_c2_norc`)
+5. **Child 1 race/ethnicity** (`cqr010b___*` + `cqr011` → `race_norc`, `hisp`, `raceG_norc`)
+6. **Child 2 race/ethnicity** (`cqr010_c2b___*` + `cqr011_c2` → `race_c2_norc`, `hisp_c2`, `raceG_c2_norc`)
+7. **Parent gender** (`mn2` → `a1_gender_norc`: 0=Female, 1=Male, 97=Non-binary — replaces `cqr002`)
+8. **Parent age** (`cqr003` → `a1_years_old`)
+9. **Parent race/ethnicity** (`sq002b___*` + `sq003` → `a1_race_norc`, `a1_hisp`, `a1_raceG_norc`)
+10. **Parent education** (`cqr004` → `educ_a1_norc` with codes 0-8, shifted from NE25's 1-8)
+11. **Marital status** (`cqfa001` → `marital_status_label_norc` with codes 0-5, shifted from NE25's 1-6)
+12. **Gift card store** (`store_choice` → `store_choice_label`: Lowe's/Amazon/Walmart/Target)
 
-**If NORC only has API access to raw REDCap variables**, the script will need modifications to include transformation logic for:
-
-1. **Child sex** (`cqr009` → `sex` factor with "Female"/"Male" labels)
-2. **Child age** (`age_in_days` → `years_old` = age_in_days / 365.25)
-3. **Parent sex** (`cqr002` → `female_a1` boolean)
-4. **Parent race/ethnicity** (`sq002_*` + `sq003` → `a1_raceG` combined race/ethnicity)
-5. **Parent education** (`cqr004` → `educ_a1` with proper factor labels)
-6. **Marital status** (`cqfa001` → labeled factor)
-
-These transformations are currently handled by the `recode_it()` function in `R/transform/ne25_transforms.R`. The monitoring script can either:
-
-**Option A**: NORC runs the full transformation pipeline before monitoring (requires more setup)
-**Option B**: Add simplified transformation logic directly in the monitoring script (more standalone)
-
-Contact Marcus Waldman to determine which approach fits NORC's workflow best.
+Variables use the `_norc` suffix where MN26 value codes differ from the NE25 pipeline.
 
 ## API Credentials Management
 
@@ -127,8 +133,12 @@ That's it!
 ## Files
 
 - `monitoring_report.R` - Main standalone script for generating monitoring reports
+- `smoke-test.R` - Smoke test for data dictionary and monitoring report
 - `mn26_redcap_api_template.csv` - Template for API credentials CSV file
-- `../config/sources/mn26.yaml` - MN26 study configuration file
+- `utils/redcap_utils.R` - REDCap API functions including `get_data_dictionary()`
+- `utils/data_transforms.R` - Data transformation functions (value labeling)
+- `utils/safe_joins.R` - Safe join utilities
+- `docs/monitoring_data_dictionary.qmd` - Data dictionary for monitoring output
 
 ## Quick Start
 
@@ -171,17 +181,49 @@ View(monitoring_data$child_demographics)
 View(monitoring_data$parent_demographics)
 ```
 
-**Optional:** Specify a different REDCap URL (defaults to Nebraska URL):
+### 3. Pull the REDCap Data Dictionary
+
+The `get_data_dictionary()` utility function returns the REDCap data dictionary as a named list, keyed by field name. By default it excludes fields marked `@HIDDEN` (fields not administered in MN26).
+
 ```r
-monitoring_data <- generate_monitoring_report(
-  csv_path = "C:/path/to/mn26_api.csv",
-  redcap_url = "https://redcap.umn.edu/api/"  # Minnesota REDCap URL
+# Load the utilities
+source("progress-monitoring/mn26/utils/redcap_utils.R")
+
+# Load credentials
+creds <- load_api_credentials("C:/Users/YOUR_USERNAME/my-APIs/mn26_redcap_api.csv")
+
+# MN26 dictionary only (excludes @HIDDEN fields)
+dict_mn <- get_data_dictionary(
+  redcap_url = "https://unmcredcap.unmc.edu/redcap/api/",
+  token = creds$api_code[1]
 )
+
+# Full dictionary (includes @HIDDEN fields)
+dict_all <- get_data_dictionary(
+  redcap_url = "https://unmcredcap.unmc.edu/redcap/api/",
+  token = creds$api_code[1],
+  exclude_hidden = FALSE
+)
+
+# Access a specific field's metadata
+dict_mn[["cqr009"]]$field_label
+dict_mn[["cqr009"]]$select_choices_or_calculations
+
+# List all field names
+names(dict_mn)
 ```
+
+**Parameters:**
+
+| Parameter | Required | Default | Description |
+|-----------|----------|---------|-------------|
+| `redcap_url` | Yes | -- | REDCap API endpoint URL |
+| `token` | Yes | -- | REDCap API token (from credentials CSV) |
+| `exclude_hidden` | No | `TRUE` | Exclude fields with `@HIDDEN` annotation |
 
 ## Output Data Frames
 
-The `generate_monitoring_report()` function returns a list with 5 data frames:
+The `generate_monitoring_report()` function returns a list with 6 data frames:
 
 ### 1. Screener Status
 Tracks whether eligibility has been determined for each participant.
@@ -237,23 +279,27 @@ table(monitoring_data$survey_completion$survey_status)
 ```
 
 ### 4. Child Demographics
-Age and sex for each child participant.
+Age, sex, and race/ethnicity for each child participant.
 
 **Columns:**
 - `pid`, `record_id`: Identifiers
 - `age_years`: Child's age in years (0-5)
 - `sex`: Child's sex (Female/Male)
+- `race_norc`: Child 1 race (White, Black or African American, American Indian or Alaska Native, Asian, Native Hawaiian or Other Pacific Islander, Other, Two or More)
+- `hisp`: Child 1 Hispanic/Latino ethnicity (Hispanic/non-Hisp.)
+- `raceG_norc`: Child 1 combined race/ethnicity
+- `race_c2_norc`, `hisp_c2`, `raceG_c2_norc`: Same variables for child 2 (NA if no second child)
 
 **Example:**
 ```r
 # Age distribution
 summary(monitoring_data$child_demographics$age_years)
-hist(monitoring_data$child_demographics$age_years,
-     main = "Child Age Distribution",
-     xlab = "Age (years)")
 
 # Sex distribution
-table(monitoring_data$child_demographics$sex)
+table(monitoring_data$child_demographics$sex_norc)
+
+# Race/ethnicity distribution
+table(monitoring_data$child_demographics$raceG_norc)
 ```
 
 ### 5. Parent Demographics
@@ -262,19 +308,18 @@ Demographics for the primary caregiver (respondent).
 **Columns:**
 - `pid`, `record_id`: Identifiers
 - `age_years`: Primary caregiver age in years
-- `female`: TRUE if female, FALSE if male
-- `race_ethnicity`: Race/ethnicity (combined categories)
-- `education`: Education level (8 categories)
-- `marital_status`: Marital status code (1-6)
-- `marital_status_label`: Marital status label ("Married", "Divorced", etc.)
+- `gender`: Parent gender ("Female", "Male", "Non-binary")
+- `race_ethnicity`: Race/ethnicity combined (`a1_raceG_norc`)
+- `education`: Education level (`educ_a1_norc`, codes 0-8)
+- `marital_status_label_norc`: Marital status label ("Married", "Divorced", etc.)
 
 **Example:**
 ```r
 # Age distribution
 summary(monitoring_data$parent_demographics$age_years)
 
-# Sex distribution
-table(monitoring_data$parent_demographics$female)
+# Gender distribution
+table(monitoring_data$parent_demographics$gender)
 
 # Race/ethnicity distribution
 table(monitoring_data$parent_demographics$race_ethnicity)
@@ -283,7 +328,7 @@ table(monitoring_data$parent_demographics$race_ethnicity)
 table(monitoring_data$parent_demographics$education)
 
 # Marital status distribution
-table(monitoring_data$parent_demographics$marital_status_label)
+table(monitoring_data$parent_demographics$marital_status_label_norc)
 ```
 
 ## Eligibility Criteria
@@ -303,67 +348,15 @@ The script implements the 4 eligibility criteria identified by Kanru:
 - Survey is "Complete" if modules 2, 3, 4, 5, 6, 7, and 9 are all marked as complete (REDCap status = 2)
 - Module 8 is excluded (follow-up data)
 
-**[MN26 TODO]**: Update module list to match MN26 survey structure once questionnaire is finalized.
+**[MN26 TODO]**: Update module list to match MN26 survey structure — see [#1](https://github.com/marcus-waldman/kidsights-norc/issues/1). Module 4 (Home Learning Environment) does not exist in MN26, and NSCH Questions is new. The current `pct_complete` denominator is incorrect.
 
-## Adapting for MN26 Data
+## Remaining [MN26 TODO] Items
 
-When MN26 data collection begins, update the following sections (search for `[MN26 TODO]` comments):
+Search for `[MN26 TODO]` comments for items still needing updates:
 
-### 1. REDCap API Configuration
-```r
-# In pull_redcap_data() function
-redcap_uri <- "YOUR_MN26_REDCAP_URL"  # Update to MN26 project URL
-```
-
-### 2. Eligibility Variable Names
-```r
-# In calculate_eligibility() function
-# Update these variable names to match MN26 data dictionary:
-eq003    # Parent age >= 19 question
-age_in_days  # Child age calculation
-eq002    # Primary caregiver question
-eqstate  # Minnesota residence question (check state code!)
-```
-
-### 3. Survey Completion Modules
-```r
-# In calculate_survey_completion() function
-# Update module list to match MN26 survey structure:
-required_modules <- paste0("module_", c(...), "_complete")
-```
-
-### 4. Demographics Variable Names
-```r
-# In extract_child_demographics() and extract_parent_demographics()
-# Verify these match MN26 transformed variable names:
-years_old, sex, a1_years_old, female_a1, a1_raceG, educ_a1, cqfa001
-```
-
-### 5. Marital Status Response Options
-```r
-# In extract_parent_demographics()
-# Update marital status labels to match MN26 questionnaire:
-marital_status_label = dplyr::case_when(...)
-```
-
-### 6. Data Source
-```r
-# In generate_monitoring_report() function
-# Replace NE25 database query with actual MN26 data transformation:
-# - Remove database query for NE25 template
-# - Add MN26 transformation pipeline call
-# - Or use transformed_data from MN26 pipeline output
-```
-
-## Questions for Kanru (from email)
-
-**Answered:**
-- ✅ Eligibility questions confirmed (4 criteria: age 19+, child 0-5, primary caregiver, lives in MN)
-- ✅ Screener completion = eligibility known/unknown
-
-**Pending:**
-- ❓ Will MN26 questionnaire change the eligibility questions?
-- ❓ What defines "survey completion" for MN26? (Same module-based logic or different criteria?)
+1. **Survey completion modules** — Define required module list for MN26 ([#1](https://github.com/marcus-waldman/kidsights-norc/issues/1))
+2. **Multi-child eligibility** — Per-child age eligibility checking
+3. **Geography** — Geocoding integration for geographic monitoring
 
 ## Contact
 

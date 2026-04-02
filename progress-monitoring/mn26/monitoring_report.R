@@ -3,8 +3,8 @@
 #' Standalone script for NORC researchers to monitor MN26 recruitment progress
 #' and demographic distribution during data collection.
 #'
-#' TEMPLATE STATUS: Currently uses NE25 data as template
-#' Once MN26 data collection begins, update the variables marked with [MN26 TODO]
+#' Updated for MN26 NORC field names and value codes.
+#' Variables with _norc suffix indicate MN26-specific coding that differs from NE25.
 #'
 #' [MN26 TODO] MULTI-CHILD HOUSEHOLDS: MN26 allows up to 2 children per household.
 #' The current code assumes 1 child per record (NE25 structure). When MN26 data is
@@ -78,23 +78,20 @@ calculate_eligibility <- function(data) {
 
   message("Calculating eligibility...")
 
-  # [MN26 TODO] Update these variable names to match MN26 REDCap structure
   eligibility_df <- data %>%
     dplyr::mutate(
       # Criterion 1: Parent age >= 19
       parent_age_eligible = (eq003 == 1) & !is.na(eq003),
 
       # Criterion 2: Child age 0-5 years (1825 days)
-      # [MN26 TODO] MN26 cutoff: 1825 days (5 years) vs NE25's 2191 days (6 years)
       # [MN26 TODO] MULTI-CHILD: Check age eligibility per child (up to 2 per household)
-      child_age_eligible = (age_in_days <= 1825) & !is.na(age_in_days),
+      child_age_eligible = (age_in_days_n <= 1825) & !is.na(age_in_days_n),
 
       # Criterion 3: Primary caregiver = Yes
       primary_caregiver_eligible = (eq002 == 1) & !is.na(eq002),
 
-      # Criterion 4: Lives in state
-      # [MN26 TODO] Update to Minnesota state code
-      state_eligible = (eqstate == 1) & !is.na(eqstate),
+      # Criterion 4: Lives in Minnesota
+      state_eligible = (mn_eqstate == 1) & !is.na(mn_eqstate),
 
       # Overall eligibility
       eligible = parent_age_eligible & child_age_eligible &
@@ -268,7 +265,12 @@ extract_child_demographics <- function(data) {
   child_demo <- data %>%
     dplyr::select(pid, record_id,
                   age_years = years_old,
-                  sex)
+                  sex_norc,
+                  race_norc, hisp, raceG_norc,
+                  dplyr::any_of(c(
+                    "years_old_c2", "sex_c2_norc",
+                    "race_c2_norc", "hisp_c2", "raceG_c2_norc"
+                  )))
 
   message("[OK] Child demographics: ", nrow(child_demo), " records")
   return(child_demo)
@@ -285,13 +287,30 @@ extract_parent_demographics <- function(data) {
   parent_demo <- data %>%
     dplyr::select(pid, record_id,
                   age_years = a1_years_old,
-                  female = female_a1,
-                  race_ethnicity = a1_raceG,
-                  education = educ_a1,
-                  marital_status_label)
+                  gender = a1_gender_norc,
+                  race_ethnicity = a1_raceG_norc,
+                  education = educ_a1_norc,
+                  marital_status_label_norc)
 
   message("[OK] Parent demographics: ", nrow(parent_demo), " records")
   return(parent_demo)
+}
+
+#' Extract compensation information
+#'
+#' @param data Transformed data
+#' @return Data frame with gift card and contact info
+extract_compensation_information <- function(data) {
+
+  message("Extracting compensation information...")
+
+  comp <- data %>%
+    dplyr::select(pid, record_id,
+                  dplyr::any_of(c("store_choice_label",
+                                  "q1394", "q1394a", "email_incentive")))
+
+  message("[OK] Compensation information: ", nrow(comp), " records")
+  return(comp)
 }
 
 # ============================================================================
@@ -304,8 +323,8 @@ extract_parent_demographics <- function(data) {
 #' Pass the path to your API credentials CSV and it does everything.
 #'
 #' @param csv_path Path to API credentials CSV file (columns: project, pid, api_code)
-#' @param redcap_url REDCap API URL (defaults to Nebraska URL as template)
-#' @return List with 5 data frames
+#' @param redcap_url REDCap API URL (defaults to UNMC REDCap instance)
+#' @return List with 6 data frames
 #' @export
 generate_monitoring_report <- function(csv_path,
                                       redcap_url = "https://unmcredcap.unmc.edu/redcap/api/") {
@@ -336,13 +355,17 @@ generate_monitoring_report <- function(csv_path,
   child_demographics <- extract_child_demographics(transformed_data)
   parent_demographics <- extract_parent_demographics(transformed_data)
 
+  # Step 8: Extract compensation information
+  compensation_information <- extract_compensation_information(transformed_data)
+
   # Return organized results
   results <- list(
     screener_status = screener_status,
     eligibility = eligibility,
     survey_completion = survey_completion,
     child_demographics = child_demographics,
-    parent_demographics = parent_demographics
+    parent_demographics = parent_demographics,
+    compensation_information = compensation_information
   )
 
   cat("\n=== MONITORING REPORT COMPLETE ===\n")
@@ -351,7 +374,8 @@ generate_monitoring_report <- function(csv_path,
   cat("  - $eligibility (", nrow(eligibility), " records)\n", sep = "")
   cat("  - $survey_completion (", nrow(survey_completion), " records)\n", sep = "")
   cat("  - $child_demographics (", nrow(child_demographics), " records)\n", sep = "")
-  cat("  - $parent_demographics (", nrow(parent_demographics), " records)\n\n", sep = "")
+  cat("  - $parent_demographics (", nrow(parent_demographics), " records)\n", sep = "")
+  cat("  - $compensation_information (", nrow(compensation_information), " records)\n\n", sep = "")
 
   return(results)
 }
@@ -388,4 +412,4 @@ generate_monitoring_report <- function(csv_path,
 # summary(monitoring_data$parent_demographics$age_years)
 # table(monitoring_data$parent_demographics$race_ethnicity)
 # table(monitoring_data$parent_demographics$education)
-# table(monitoring_data$parent_demographics$marital_status_label)
+# table(monitoring_data$parent_demographics$marital_status_label_norc)

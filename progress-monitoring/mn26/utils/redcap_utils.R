@@ -26,11 +26,52 @@ load_api_credentials <- function(csv_path) {
   return(credentials)
 }
 
+#' Get REDCap data dictionary as a named list
+#'
+#' Pulls the metadata (data dictionary) from a REDCap project via API.
+#' Returns a named list keyed by field_name, optionally filtering out
+#' fields marked with @HIDDEN in field_annotation.
+#'
+#' @param redcap_url REDCap API URL
+#' @param token API token
+#' @param exclude_hidden Logical, whether to exclude @HIDDEN fields (default TRUE)
+#' @return Named list where each element is a field's metadata
+get_data_dictionary <- function(redcap_url, token, exclude_hidden = TRUE) {
+
+  resp <- httr::POST(
+    redcap_url,
+    body = list(token = token, content = "metadata",
+                format = "json", returnFormat = "json"),
+    encode = "form"
+  )
+
+  if (httr::status_code(resp) != 200) {
+    stop("REDCap metadata API error: ", httr::status_code(resp))
+  }
+
+  dict_list <- httr::content(resp)
+
+  if (exclude_hidden) {
+    dict_list <- Filter(function(d) {
+      ann <- d$field_annotation
+      is.null(ann) || !grepl("@HIDDEN", ann)
+    }, dict_list)
+  }
+
+  dict_named <- list()
+  for (d in dict_list) {
+    dict_named[[d$field_name]] <- d
+  }
+
+  message("[OK] Data dictionary: ", length(dict_named), " fields",
+          if (exclude_hidden) " (after excluding @HIDDEN)" else "")
+  return(dict_named)
+}
+
 #' Pull raw data from REDCap API
 #'
 #' Uses the same API parameters as the NE25 pipeline for reliable extraction.
-#'
-#' [MN26 TODO] Update redcap_url to MN26 project URL once available
+#' MN26 NORC project is hosted on the same UNMC REDCap instance.
 #'
 #' @param credentials API credentials data frame
 #' @param redcap_url REDCap API URL
@@ -49,7 +90,7 @@ pull_redcap_data <- function(credentials, redcap_url) {
 
     message("  - Extracting from project: ", project_name)
 
-    # Use redcap_read() with NE25 pipeline parameters (not redcap_read_oneshot)
+    # Use redcap_read() with consistent parameters (not redcap_read_oneshot)
     result <- tryCatch({
       REDCapR::redcap_read(
         redcap_uri = redcap_url,
@@ -78,25 +119,15 @@ pull_redcap_data <- function(credentials, redcap_url) {
 
     all_data[[project_name]] <- project_data
 
-    # Also pull the data dictionary (metadata) for the first project
+    # Pull the data dictionary (metadata) for the first project
     if (length(all_dictionaries) == 0) {
-      dict_result <- tryCatch({
-        resp <- httr::POST(
-          redcap_url,
-          body = list(token = api_token, content = "metadata",
-                      format = "json", returnFormat = "json"),
-          encode = "form"
-        )
-        dict_list <- httr::content(resp)
-        dict_named <- list()
-        for (d in dict_list) {
-          dict_named[[d$field_name]] <- d
+      dict_result <- tryCatch(
+        get_data_dictionary(redcap_url, api_token, exclude_hidden = FALSE),
+        error = function(e) {
+          warning("Could not pull data dictionary: ", e$message)
+          NULL
         }
-        dict_named
-      }, error = function(e) {
-        warning("Could not pull data dictionary: ", e$message)
-        NULL
-      })
+      )
       all_dictionaries <- dict_result
     }
 
