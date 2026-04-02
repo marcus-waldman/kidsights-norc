@@ -68,6 +68,57 @@ get_data_dictionary <- function(redcap_url, token, exclude_hidden = TRUE) {
   return(dict_named)
 }
 
+#' Compare two data dictionaries for consistency
+#'
+#' Checks that two dictionaries (named lists from get_data_dictionary()) have
+#' the same field names, field types, and select choices.
+#'
+#' @param dict_a Named list (reference dictionary)
+#' @param dict_b Named list (dictionary to compare)
+#' @return Character vector of mismatch descriptions (empty if consistent)
+validate_dictionaries <- function(dict_a, dict_b) {
+
+  mismatches <- character(0)
+
+  fields_a <- names(dict_a)
+  fields_b <- names(dict_b)
+
+  # Check for fields missing in either direction
+  only_in_a <- setdiff(fields_a, fields_b)
+  only_in_b <- setdiff(fields_b, fields_a)
+
+  if (length(only_in_a) > 0) {
+    mismatches <- c(mismatches,
+      paste0("Fields in reference but not in comparison: ",
+             paste(only_in_a, collapse = ", ")))
+  }
+  if (length(only_in_b) > 0) {
+    mismatches <- c(mismatches,
+      paste0("Fields in comparison but not in reference: ",
+             paste(only_in_b, collapse = ", ")))
+  }
+
+  # Check shared fields for type and choices differences
+  shared <- intersect(fields_a, fields_b)
+  for (fld in shared) {
+    type_a <- dict_a[[fld]]$field_type
+    type_b <- dict_b[[fld]]$field_type
+    if (!identical(type_a, type_b)) {
+      mismatches <- c(mismatches,
+        paste0("Field '", fld, "' type differs: '", type_a, "' vs '", type_b, "'"))
+    }
+
+    choices_a <- dict_a[[fld]]$select_choices_or_calculations
+    choices_b <- dict_b[[fld]]$select_choices_or_calculations
+    if (!identical(choices_a, choices_b)) {
+      mismatches <- c(mismatches,
+        paste0("Field '", fld, "' choices differ"))
+    }
+  }
+
+  return(mismatches)
+}
+
 #' Pull raw data from REDCap API
 #'
 #' Uses the same API parameters as the NE25 pipeline for reliable extraction.
@@ -119,16 +170,16 @@ pull_redcap_data <- function(credentials, redcap_url) {
 
     all_data[[project_name]] <- project_data
 
-    # Pull the data dictionary (metadata) for the first project
-    if (length(all_dictionaries) == 0) {
-      dict_result <- tryCatch(
-        get_data_dictionary(redcap_url, api_token, exclude_hidden = FALSE),
-        error = function(e) {
-          warning("Could not pull data dictionary: ", e$message)
-          NULL
-        }
-      )
-      all_dictionaries <- dict_result
+    # Pull the data dictionary for every project
+    dict_result <- tryCatch(
+      get_data_dictionary(redcap_url, api_token, exclude_hidden = FALSE),
+      error = function(e) {
+        warning("Could not pull data dictionary for ", project_name, ": ", e$message)
+        NULL
+      }
+    )
+    if (!is.null(dict_result)) {
+      all_dictionaries[[project_name]] <- dict_result
     }
 
     message("    [OK] Retrieved ", nrow(project_data), " records")
@@ -141,8 +192,25 @@ pull_redcap_data <- function(credentials, redcap_url) {
     stop("No data retrieved from any REDCap projects")
   }
 
+  # Validate data dictionaries across projects
+  if (length(all_dictionaries) >= 2) {
+    ref_name <- names(all_dictionaries)[1]
+    ref_dict <- all_dictionaries[[ref_name]]
+    for (j in 2:length(all_dictionaries)) {
+      cmp_name <- names(all_dictionaries)[j]
+      issues <- validate_dictionaries(ref_dict, all_dictionaries[[cmp_name]])
+      if (length(issues) > 0) {
+        stop("Data dictionary mismatch between '", ref_name, "' and '", cmp_name, "':\n",
+             paste("  -", issues, collapse = "\n"))
+      }
+    }
+    message("[OK] Data dictionaries consistent across ", length(all_dictionaries), " projects")
+  }
+
   combined_data <- dplyr::bind_rows(all_data)
   message("[OK] Total records across all projects: ", nrow(combined_data))
 
-  return(list(data = combined_data, dictionary = all_dictionaries))
+  # Return the first project's dictionary (validated to match all others)
+  reference_dict <- if (length(all_dictionaries) > 0) all_dictionaries[[1]] else list()
+  return(list(data = combined_data, dictionary = reference_dict))
 }
