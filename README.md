@@ -13,33 +13,40 @@ This repository provides standalone R scripts that connect to REDCap via API to 
 
 ## Current Status
 
-✅ **SMOKE TEST PASSING** — The monitoring script runs end-to-end against the NORC NE Smoke Test REDCap project (20 records, 62 columns).
+✅ **SMOKE TEST PASSING** — The monitoring script runs end-to-end against the NORC MN test REDCap project (2,654 records, 976 columns).
 
 ### Smoke Test Results
 
 | Component | Result |
 |---|---|
-| REDCap API connection | ✅ 20 records, 62 columns retrieved |
+| REDCap API connection | ✅ 2,654 records retrieved |
+| Data dictionary | ✅ 865 fields (648 after @HIDDEN filtering) |
 | Data transforms | ✅ All demographic derivations succeed |
-| Eligibility | ✅ 17 eligible, 3 not eligible |
-| Screener status | ✅ 20 complete, 0 incomplete |
-| Survey completion | ✅ 12 complete, 8 incomplete |
-| Child demographics | ✅ 20 records |
-| Parent demographics | ✅ 20 records |
+| Eligibility | ✅ Calculated (0 eligible in test data — most fields unpopulated) |
+| Screener status | ✅ 2,654 records |
+| Survey completion | ⚠️ Runs but module list needs verification ([#1](https://github.com/marcus-waldman/kidsights-norc/issues/1)) |
+| Child demographics | ✅ 2,654 records (child 1 + child 2 columns) |
+| Parent demographics | ✅ 2,654 records |
+| Compensation info | ✅ 2,654 records |
+
+### MN26 Migration Status
+
+Variables updated for MN26 NORC field names and value codes (see `CLAUDE.md` for full mapping):
+
+- ✅ Race/ethnicity (parent, child 1, child 2) — `sq002b___*`, `cqr010b___*`
+- ✅ Child sex — swapped codes, `sex_norc`
+- ✅ Parent gender — `mn2` replaces `cqr002`, includes Non-binary
+- ✅ Education — codes 0-8, `educ_a1_norc`
+- ✅ Marital status — codes 0-5, `marital_status_label_norc`
+- ✅ Age — `age_in_days_n` / `age_in_days_c2_n`
+- ✅ State eligibility — `mn_eqstate`
+- ✅ Compensation — `store_choice_label`
+- ✅ Data dictionary utility — `get_data_dictionary()`
+- ⚠️ Survey completion module list — needs verification ([#1](https://github.com/marcus-waldman/kidsights-norc/issues/1))
 
 ### Running the Smoke Test
 
 Run `progress-monitoring/mn26/smoke-test.R`. **You must update the `csv_path` in `smoke-test.R` to point to your local copy of the API credentials CSV.**
-
-### Resolved Issues
-
-- ~~`pid` missing from REDCap data~~ — now derived from credentials CSV
-- ~~`eq002`, `eq003` missing~~ — added to API export by IT
-- ~~Survey module column name mismatch~~ — code updated to use actual REDCap instrument names, including module 6 age-band sub-instruments
-
-### To Resolve
-
-1. **Template migration**: Update `[MN26 TODO]` markers once MN26 data dictionary is finalized
 
 ## Quick Start
 
