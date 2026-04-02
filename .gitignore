@@ -39,8 +39,10 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-# pkgdown site
-docs/
+# pkgdown site (allow top-level docs/ for GitHub Pages and mn26 docs)
+docs/*
+!docs/index.html
+!docs/.nojekyll
 !progress-monitoring/mn26/docs/
 
 # translation temp files

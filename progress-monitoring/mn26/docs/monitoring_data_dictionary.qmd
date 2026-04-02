@@ -11,6 +11,7 @@ format:
     theme: cosmo
     code-fold: true
     df-print: kable
+    embed-resources: true
 ---
 
 Data dictionary for the 6 data frames returned by `generate_monitoring_report()`.
