@@ -58,12 +58,21 @@ install.packages(c("dplyr", "tidyr", "REDCapR", "httr"))
 
 ### 2. Create API Credentials File
 
-Create a CSV file with your REDCap API credentials (use `progress-monitoring/mn26/mn26_redcap_api_template.csv` as template):
+Create a CSV file with your REDCap API credentials (use `progress-monitoring/mn26/mn26_redcap_api_template.csv` as template). Include one row per REDCap project:
 
 ```csv
 project,pid,api_code
-mn26_main_survey,7679,YOUR_API_TOKEN_HERE
+mn26_project_1,8609,YOUR_API_TOKEN_HERE
+mn26_project_2,8729,YOUR_API_TOKEN_HERE
 ```
+
+| Column | Description |
+|--------|-------------|
+| `project` | Descriptive name for the REDCap project |
+| `pid` | REDCap project ID |
+| `api_code` | REDCap API token for that project |
+
+All projects must share the same data dictionary (field names, types, and choices). The pipeline validates this automatically and errors if any project's dictionary is inconsistent.
 
 **Security Note**: Store this file outside the repository (e.g., `C:/Users/YOUR_USERNAME/my-APIs/`) and **never commit it to git**.
 
@@ -119,13 +128,14 @@ kidsights-norc/
 
 ### Comprehensive Monitoring Output
 
-The script returns 5 data frames:
+The script returns 6 data frames:
 
 1. **Screener Status** - Tracks whether eligibility has been determined
 2. **Eligibility** - Four eligibility criteria with overall determination
 3. **Survey Completion** - Module-by-module completion tracking
 4. **Child Demographics** - Age and sex distribution
 5. **Parent Demographics** - Age, sex, race/ethnicity, education, marital status
+6. **Compensation Information** - Gift card store choice and contact details
 
 ## Required REDCap Variables
 

@@ -42,12 +42,12 @@ The monitoring system is organized into modular utility functions:
 
 ### Data Flow
 
-1. **API Credentials** → Load from CSV file (columns: `project`, `pid`, `api_code`)
-2. **REDCap API** → Pull raw data using `REDCapR::redcap_read()` with consistent parameters
+1. **API Credentials** → Load from CSV file (columns: `project`, `pid`, `api_code`); one row per REDCap project
+2. **REDCap API** → Pull raw data from each project using `REDCapR::redcap_read()`, validate data dictionaries are consistent across projects, then append into a single data frame
 3. **Transform** → Convert raw variables into monitoring-ready derived variables
 4. **Calculate** → Compute eligibility (4 criteria), screener status, survey completion
 5. **Extract** → Pull child and parent demographics
-6. **Return** → List with 5 data frames (screener_status, eligibility, survey_completion, child_demographics, parent_demographics)
+6. **Return** → List with 6 data frames (screener_status, eligibility, survey_completion, child_demographics, parent_demographics, compensation_information)
 
 ### Eligibility Logic
 
@@ -117,13 +117,14 @@ The monitoring script is standalone with no external pipeline dependencies:
 
 ## Output Data Frames
 
-The `generate_monitoring_report()` function returns a list with 5 data frames:
+The `generate_monitoring_report()` function returns a list with 6 data frames:
 
 1. **`$screener_status`** - Eligibility determination status (complete/incomplete)
 2. **`$eligibility`** - Four eligibility criteria + overall eligibility boolean
 3. **`$survey_completion`** - Module completion tracking with percentage and last completed module
 4. **`$child_demographics`** - Age, sex, race/ethnicity for child 1 (and child 2 if present)
 5. **`$parent_demographics`** - Age, gender, race/ethnicity, education, marital status
+6. **`$compensation_information`** - Gift card store choice and contact details
 
 ## Contact
 

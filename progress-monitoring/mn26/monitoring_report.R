@@ -23,7 +23,7 @@
 #'   monitoring_data <- generate_monitoring_report(csv_path = "C:/path/to/mn26_api.csv")
 #'
 #' Returns:
-#'   List with 5 data frames:
+#'   List with 6 data frames:
 #'     - screener_status: Screener completion (eligibility known/unknown)
 #'     - eligibility: Eligibility determination (4 criteria)
 #'     - survey_completion: Survey module completion status
