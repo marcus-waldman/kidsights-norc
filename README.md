@@ -24,7 +24,7 @@ This repository provides standalone R scripts that connect to REDCap via API to 
 | Data transforms | ✅ All demographic derivations succeed |
 | Eligibility | ✅ Calculated (0 eligible in test data — most fields unpopulated) |
 | Screener status | ✅ 2,654 records |
-| Survey completion | ⚠️ Runs but module list needs verification ([#1](https://github.com/marcus-waldman/kidsights-norc/issues/1)) |
+| Survey completion | ✅ 7 complete, per-participant denominator (7-11) |
 | Child demographics | ✅ 2,654 records (child 1 + child 2 columns) |
 | Parent demographics | ✅ 2,654 records |
 | Compensation info | ✅ 2,654 records |
@@ -42,7 +42,7 @@ Variables updated for MN26 NORC field names and value codes (see `CLAUDE.md` for
 - ✅ State eligibility — `mn_eqstate`
 - ✅ Compensation — `store_choice_label`
 - ✅ Data dictionary utility — `get_data_dictionary()`
-- ⚠️ Survey completion module list — needs verification ([#1](https://github.com/marcus-waldman/kidsights-norc/issues/1))
+- ✅ Survey completion — per-participant denominator with conditional child 2 and NSCH logic
 
 ### Running the Smoke Test
 
@@ -145,9 +145,8 @@ See `progress-monitoring/mn26/README.md` for complete variable list and data gov
 
 Search for `[MN26 TODO]` comments for items still needing updates:
 
-1. **Module list** - Verify survey completion modules match MN26 structure ([#1](https://github.com/marcus-waldman/kidsights-norc/issues/1))
-2. **Multi-child eligibility** - Per-child age eligibility checking
-3. **Geography** - Geocoding integration for geographic monitoring
+1. **Multi-child eligibility** - Per-child age eligibility checking
+2. **Geography** - Geocoding integration for geographic monitoring
 
 ## Documentation
 

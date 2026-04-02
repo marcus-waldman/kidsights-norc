@@ -11,13 +11,13 @@ for (pkg in required_packages) {
   library(pkg, character.only = TRUE)
 }
 
-# Set working directory to repo root (where this script lives)
+# Set working directory to repo root (two levels up from this script)
 if (interactive()) {
-  setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+  setwd(file.path(dirname(rstudioapi::getSourceEditorContext()$path), "..", ".."))
 } else {
   args <- commandArgs(trailingOnly = FALSE)
   script_path <- sub("--file=", "", args[grep("--file=", args)])
-  if (length(script_path) > 0) setwd(dirname(script_path))
+  if (length(script_path) > 0) setwd(file.path(dirname(script_path), "..", ".."))
 }
 
 # --- UPDATE THIS PATH to your local credentials file ---

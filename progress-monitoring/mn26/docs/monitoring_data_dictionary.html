@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-04-01">
+<meta name="dcterms.date" content="2026-04-02">
 
 <title>MN26 Monitoring Data Dictionary</title>
 <style>
@@ -89,7 +89,8 @@ window.Quarto = {
   <li><a href="#survey_completion" id="toc-survey_completion" class="nav-link" data-scroll-target="#survey_completion"><span class="header-section-number">3</span> <code>$survey_completion</code></a>
   <ul class="collapse">
   <li><a href="#columns-2" id="toc-columns-2" class="nav-link" data-scroll-target="#columns-2"><span class="header-section-number">3.1</span> Columns</a></li>
-  <li><a href="#derivation-1" id="toc-derivation-1" class="nav-link" data-scroll-target="#derivation-1"><span class="header-section-number">3.2</span> Derivation</a></li>
+  <li><a href="#mn26-instrument-order-125" id="toc-mn26-instrument-order-125" class="nav-link" data-scroll-target="#mn26-instrument-order-125"><span class="header-section-number">3.2</span> MN26 Instrument Order (1–25)</a></li>
+  <li><a href="#derivation-1" id="toc-derivation-1" class="nav-link" data-scroll-target="#derivation-1"><span class="header-section-number">3.3</span> Derivation</a></li>
   </ul></li>
   <li><a href="#child_demographics" id="toc-child_demographics" class="nav-link" data-scroll-target="#child_demographics"><span class="header-section-number">4</span> <code>$child_demographics</code></a>
   <ul class="collapse">
@@ -127,7 +128,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">April 1, 2026</p>
+      <p class="date">April 2, 2026</p>
     </div>
   </div>
   
@@ -336,7 +337,7 @@ Tip
 </section>
 <section id="survey_completion" class="level2" data-number="3">
 <h2 data-number="3" class="anchored" data-anchor-id="survey_completion"><span class="header-section-number">3</span> <code>$survey_completion</code></h2>
-<p>Module-by-module completion tracking.</p>
+<p>Module-by-module completion tracking with per-participant denominator.</p>
 <section id="columns-2" class="level3" data-number="3.1">
 <h3 data-number="3.1" class="anchored" data-anchor-id="columns-2"><span class="header-section-number">3.1</span> Columns</h3>
 <table class="table-striped table-hover caption-top table">
@@ -372,34 +373,41 @@ Tip
 <td>Unique per record</td>
 </tr>
 <tr class="odd">
+<td><code>n_required</code></td>
+<td>Derived</td>
+<td>integer</td>
+<td>Per-participant required module count</td>
+<td>7–11</td>
+</tr>
+<tr class="even">
 <td><code>modules_complete</code></td>
 <td>Derived</td>
 <td>integer</td>
 <td>Count of completed modules</td>
-<td>0 to N</td>
+<td>0 to <code>n_required</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>pct_complete</code></td>
 <td>Derived</td>
 <td>numeric</td>
 <td>Percentage of modules complete</td>
 <td>0 to 100</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>last_module_complete</code></td>
 <td>Derived</td>
 <td>character</td>
-<td>Name of last completed module</td>
-<td>Module name or <code>"None"</code></td>
+<td>Name of last completed instrument</td>
+<td>See instrument order below</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>survey_complete</code></td>
 <td>Derived</td>
 <td>logical</td>
 <td>All required modules complete</td>
 <td><code>TRUE</code>, <code>FALSE</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>survey_status</code></td>
 <td>Derived</td>
 <td>character</td>
@@ -409,25 +417,109 @@ Tip
 </tbody>
 </table>
 </section>
-<section id="derivation-1" class="level3" data-number="3.2">
-<h3 data-number="3.2" class="anchored" data-anchor-id="derivation-1"><span class="header-section-number">3.2</span> Derivation</h3>
+<section id="mn26-instrument-order-125" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="mn26-instrument-order-125"><span class="header-section-number">3.2</span> MN26 Instrument Order (1–25)</h3>
+<table class="table-striped table-hover caption-top table">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 21%">
+<col style="width: 50%">
+<col style="width: 21%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">#</th>
+<th>Instrument</th>
+<th>REDCap <code>_complete</code> column</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">1</td>
+<td>Consent</td>
+<td><code>consent_doc_complete</code></td>
+<td>Always</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">2</td>
+<td>Eligibility</td>
+<td><code>eligibility_form_norc_complete</code></td>
+<td>Always</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">3</td>
+<td>Family Info</td>
+<td><code>module_2_family_information_complete</code></td>
+<td>Always</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">4</td>
+<td>Child Info</td>
+<td><code>module_3_child_information_complete</code></td>
+<td>Always</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">5–12</td>
+<td>Module 6 (child 1)</td>
+<td><code>module_6_*_complete</code></td>
+<td>Always (1 age-band per child)</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">13</td>
+<td>NSCH Questions (child 1)</td>
+<td><code>nsch_questions_complete</code></td>
+<td>Only if <code>age_in_days_n</code> 365–1065</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">14</td>
+<td>Child Info 2</td>
+<td><code>child_information_2_954c_complete</code></td>
+<td>Only if <code>dob_c2_n</code> not empty</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">15–22</td>
+<td>Module 6 (child 2)</td>
+<td><code>module_6_*_2_complete</code></td>
+<td>Only if child 2 exists</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">23</td>
+<td>NSCH Questions (child 2)</td>
+<td><code>nsch_questions_2_complete</code></td>
+<td>Only if child 2 + age 365–1065</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">24</td>
+<td>Compensation</td>
+<td><code>module_9_compensation_information_complete</code></td>
+<td>Always</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">25</td>
+<td>Follow-up</td>
+<td><code>module_8_followup_information_complete</code></td>
+<td>Always</td>
+</tr>
+</tbody>
+</table>
+<p>Instruments 26–29 (Eligibility Form, Home Learning Environment, Module 7, Birthdate Confirmation) are <strong>ignored</strong> — retained in REDCap but disconnected from branching logic.</p>
+</section>
+<section id="derivation-1" class="level3" data-number="3.3">
+<h3 data-number="3.3" class="anchored" data-anchor-id="derivation-1"><span class="header-section-number">3.3</span> Derivation</h3>
 <ul>
 <li>A module is “complete” when its REDCap instrument status = 2</li>
-<li><code>survey_complete</code>: <code>TRUE</code> when all required modules have status = 2</li>
+<li>Module 6 age bands are collapsed: complete if <strong>any</strong> sub-instrument for that child == 2</li>
+<li><code>n_required</code> varies per participant (7–11) based on:
+<ul>
+<li>Base: 7 (6 always-required + 1 module 6 child 1)</li>
+<li>+1 if child 1 NSCH-eligible (age 365–1065 days)</li>
+<li>+2 if child 2 exists (child info 2 + module 6 child 2)</li>
+<li>+1 if child 2 NSCH-eligible</li>
+</ul></li>
+<li><code>pct_complete = modules_complete / n_required * 100</code></li>
+<li><code>survey_complete</code>: <code>TRUE</code> when <code>modules_complete == n_required</code></li>
 </ul>
-<div class="callout callout-style-default callout-warning callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Warning
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p><strong><code>pct_complete</code> is currently incorrect.</strong> The required module list is carried over from NE25 and does not match MN26. Specifically: Module 4 (Home Learning Environment) does not exist in MN26 and is silently dropped, <code>nsch_questions</code> is new in MN26 but not included, and child 2 modules (<code>module_6_*_2</code>, <code>nsch_questions_2</code>) are unaccounted for. See <a href="https://github.com/marcus-waldman/kidsights-norc/issues/1">GitHub Issue #1</a> for the full list of questions that need resolving before this data frame is reliable.</p>
-</div>
-</div>
 <div style="page-break-after: always;"></div>
 </section>
 </section>

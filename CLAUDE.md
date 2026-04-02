@@ -61,7 +61,7 @@ Screener is "complete" when eligibility is known (non-missing).
 
 ### Survey Completion
 
-Survey is "complete" when all required modules have REDCap status = 2. [MN26 TODO] Module list needs verification for MN26 survey structure.
+Survey is "complete" when all required instruments (1-25) have REDCap status = 2. Uses per-participant denominator (7-11) because child 2 modules and NSCH questions are conditionally required. Instruments 26-29 (old NE25: eligibility form, home learning environment, module 7, birthdate confirmation) are ignored.
 
 ## MN26 Variable Mapping (from NE25)
 
@@ -94,7 +94,6 @@ Survey is "complete" when all required modules have REDCap status = 2. [MN26 TOD
 - `store_choice_label` — Gift card store (Lowe's/Amazon/Walmart/Target)
 
 ### Remaining [MN26 TODO] Items
-- Survey completion module list verification
 - Multi-child eligibility checking (per-child age check)
 - Geography/geocoding integration
 

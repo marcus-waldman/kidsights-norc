@@ -344,19 +344,24 @@ The script implements the 4 eligibility criteria identified by Kanru:
 
 ## Survey Completion
 
-**Current Logic** (from NE25 template):
-- Survey is "Complete" if modules 2, 3, 4, 5, 6, 7, and 9 are all marked as complete (REDCap status = 2)
-- Module 8 is excluded (follow-up data)
+Survey completion uses MN26 instrument order (1-25), confirmed by Vinod (2026-04-02). Instruments 26-29 are ignored (old NE25 instruments, disconnected).
 
-**[MN26 TODO]**: Update module list to match MN26 survey structure — see [#1](https://github.com/marcus-waldman/kidsights-norc/issues/1). Module 4 (Home Learning Environment) does not exist in MN26, and NSCH Questions is new. The current `pct_complete` denominator is incorrect.
+**Always required** (instruments 1-4, 24-25):
+- Consent, Eligibility (NORC), Family Info, Child Info, Compensation, Follow-up
+
+**Module 6 (child 1)**: One age-band sub-instrument per child (instruments 5-12)
+
+**Conditionally required**:
+- NSCH Questions (child 1): only if `age_in_days_n` between 365-1065 days
+- Child 2 instruments (14-23): only if `dob_c2_n` is not empty
+- NSCH Questions (child 2): only if child 2 exists AND age 365-1065 days
+
+The denominator (`n_required`) is per-participant, ranging from 7 to 11 depending on number of children and NSCH eligibility.
 
 ## Remaining [MN26 TODO] Items
 
-Search for `[MN26 TODO]` comments for items still needing updates:
-
-1. **Survey completion modules** — Define required module list for MN26 ([#1](https://github.com/marcus-waldman/kidsights-norc/issues/1))
-2. **Multi-child eligibility** — Per-child age eligibility checking
-3. **Geography** — Geocoding integration for geographic monitoring
+1. **Multi-child eligibility** — Per-child age eligibility checking
+2. **Geography** — Geocoding integration for geographic monitoring
 
 ## Contact
 
