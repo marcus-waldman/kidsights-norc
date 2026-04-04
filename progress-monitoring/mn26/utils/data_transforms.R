@@ -2,7 +2,8 @@
 #'
 #' Functions for transforming raw REDCap data into monitoring variables.
 #' Updated for MN26 NORC field names and value codes.
-#' Variables use _norc suffix where codes differ from NE25 pipeline.
+#' Variables use _norc suffix for MN26-specific derived variables.
+#' Note: Many codes (sex, education) are identical between NE25 and MN26.
 
 #' Transform raw REDCap data into monitoring variables
 #'
@@ -23,7 +24,7 @@ transform_raw_data <- function(raw_data, dictionary = NULL) {
       years_old = age_in_days_n / 365.25,
 
       # --- Child 1 sex ---
-      # MN26: cqr009 = 1 (Female), 0 (Male) — SWAPPED from NE25
+      # cqr009 = 1 (Female), 0 (Male) — same coding in both NE25 and MN26
       sex_norc = dplyr::case_when(
         cqr009 == 1 ~ "Female",
         cqr009 == 0 ~ "Male",
@@ -43,7 +44,7 @@ transform_raw_data <- function(raw_data, dictionary = NULL) {
       a1_years_old = as.numeric(cqr003),
 
       # --- Parent education ---
-      # MN26: cqr004 codes 0-8 (shifted from NE25's 1-8, different labels)
+      # cqr004 codes 0-8 — same coding in both NE25 and MN26
       educ_a1_norc = dplyr::case_when(
         cqr004 == 0 ~ "8th grade or less",
         cqr004 == 1 ~ "9th-12th grade, No diploma",
@@ -58,7 +59,7 @@ transform_raw_data <- function(raw_data, dictionary = NULL) {
       ),
 
       # --- Marital status ---
-      # MN26: cqfa001 codes 0-5 (shifted from NE25's 1-6)
+      # cqfa001 codes 0-5 — verify against NE25 dictionary (may be same coding)
       marital_status_label_norc = dplyr::case_when(
         cqfa001 == 0 ~ "Married",
         cqfa001 == 1 ~ "Not married, but living with a partner",

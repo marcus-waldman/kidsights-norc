@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This repository contains sample monitoring tools for NORC researchers tracking the Minnesota 2026 (MN26) study recruitment progress and demographic distribution. The codebase has been updated for MN26 NORC field names and value codes. Variables with `_norc` suffix indicate MN26-specific coding that differs from the NE25 pipeline.
+This repository contains sample monitoring tools for NORC researchers tracking the Minnesota 2026 (MN26) study recruitment progress and demographic distribution. The codebase has been updated for MN26 NORC field names and value codes. Variables with `_norc` suffix indicate MN26-specific derived variables. Note: programmatic dictionary comparison (2026-04-04) confirmed that many codes (sex, education) are identical between NE25 and MN26 — earlier documentation incorrectly claimed these were changed.
 
 ## Key Commands
 
@@ -76,12 +76,12 @@ Survey is "complete" when all required instruments (1-25) have REDCap status = 2
 | Child race | `cqr010___*` | `cqr010b___*` (codes 100-105) |
 
 ### Changed Value Codes
-| Variable | NE25 | MN26 |
-|----------|------|------|
-| Child sex (`cqr009`) | 0=Female, 1=Male | 1=Female, 0=Male |
-| Education (`cqr004`) | 1-8 | 0-8 |
-| Marital status (`cqfa001`) | 1-6 | 0-5 |
-| Parent gender (`mn2`) | N/A | 0=Female, 1=Male, 97=Non-binary |
+| Variable | NE25 | MN26 | Status |
+|----------|------|------|--------|
+| Child sex (`cqr009`) | 1=Female, 0=Male | 1=Female, 0=Male | **Identical** (no swap) |
+| Education (`cqr004`) | 0-8 | 0-8 | **Identical** |
+| Marital status (`cqfa001`) | 0-5 | 0-5 | Verify (may be identical) |
+| Parent gender (`mn2`) | N/A | 0=Female, 1=Male, 97=Non-binary | New variable |
 
 ### Derived Variables (_norc suffix)
 - `sex_norc`, `sex_c2_norc` — Child sex with MN26 codes

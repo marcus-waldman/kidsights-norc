@@ -35,7 +35,7 @@ Scripts for NORC researchers to monitor Minnesota 2026 (MN26) study recruitment 
 
 ### Child 1 Demographics (Required)
 - `age_in_days_n` - Child age (already listed above)
-- `cqr009` - Child sex (1=Female, 0=Male — swapped from NE25)
+- `cqr009` - Child sex (1=Female, 0=Male — same as NE25)
 - `cqr010b` - Child race (checkbox, check all that apply):
   - `cqr010b___100` (American Indian or Alaska Native), `___101` (Asian), `___102` (Black or African American), `___103` (Native Hawaiian or Other Pacific Islander), `___104` (White), `___105` (Other)
 - `cqr011` - Child Hispanic/Latino ethnicity (0=No, 1=Yes)
@@ -68,15 +68,15 @@ The monitoring script includes built-in transforms in `utils/data_transforms.R` 
 
 1. **Child 1 age** (`age_in_days_n` → `years_old`)
 2. **Child 2 age** (`age_in_days_c2_n` → `years_old_c2`)
-3. **Child 1 sex** (`cqr009` → `sex_norc`: 1=Female, 0=Male — swapped from NE25)
+3. **Child 1 sex** (`cqr009` → `sex_norc`: 1=Female, 0=Male — same as NE25)
 4. **Child 2 sex** (`cqr009_c2` → `sex_c2_norc`)
 5. **Child 1 race/ethnicity** (`cqr010b___*` + `cqr011` → `race_norc`, `hisp`, `raceG_norc`)
 6. **Child 2 race/ethnicity** (`cqr010_c2b___*` + `cqr011_c2` → `race_c2_norc`, `hisp_c2`, `raceG_c2_norc`)
 7. **Parent gender** (`mn2` → `a1_gender_norc`: 0=Female, 1=Male, 97=Non-binary — replaces `cqr002`)
 8. **Parent age** (`cqr003` → `a1_years_old`)
 9. **Parent race/ethnicity** (`sq002b___*` + `sq003` → `a1_race_norc`, `a1_hisp`, `a1_raceG_norc`)
-10. **Parent education** (`cqr004` → `educ_a1_norc` with codes 0-8, shifted from NE25's 1-8)
-11. **Marital status** (`cqfa001` → `marital_status_label_norc` with codes 0-5, shifted from NE25's 1-6)
+10. **Parent education** (`cqr004` → `educ_a1_norc` with codes 0-8, same as NE25)
+11. **Marital status** (`cqfa001` → `marital_status_label_norc` with codes 0-5)
 12. **Gift card store** (`store_choice` → `store_choice_label`: Lowe's/Amazon/Walmart/Target)
 
 Variables use the `_norc` suffix where MN26 value codes differ from the NE25 pipeline.
