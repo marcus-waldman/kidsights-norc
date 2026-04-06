@@ -133,7 +133,8 @@ That's it!
 ## Files
 
 - `monitoring_report.R` - Main standalone script for generating monitoring reports
-- `smoke-test.R` - Smoke test for data dictionary and monitoring report
+- `smoke-test.R` - Smoke test against live REDCap (requires API access)
+- `synthetic-test.R` - Offline synthetic data tests (no API needed, 105 assertions)
 - `mn26_redcap_api_template.csv` - Template for API credentials CSV file
 - `utils/redcap_utils.R` - REDCap API functions including `get_data_dictionary()`
 - `utils/data_transforms.R` - Data transformation functions (value labeling)

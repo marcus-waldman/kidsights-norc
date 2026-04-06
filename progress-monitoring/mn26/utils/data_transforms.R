@@ -114,7 +114,11 @@ transform_raw_data <- function(raw_data, dictionary = NULL) {
           sq002b___105 == 1 ~ "Other",
           .default = NA_character_
         ),
-        a1_raceG_norc = ifelse(a1_hisp == "Hispanic", "Hispanic", paste0(a1_race_norc, ", non-Hisp."))
+        a1_raceG_norc = dplyr::case_when(
+          is.na(a1_race_norc) & a1_hisp != "Hispanic" ~ NA_character_,
+          a1_hisp == "Hispanic" ~ "Hispanic",
+          .default = paste0(a1_race_norc, ", non-Hisp.")
+        )
       )
   } else {
     transformed <- transformed %>%
@@ -148,7 +152,11 @@ transform_raw_data <- function(raw_data, dictionary = NULL) {
           cqr010b___105 == 1 ~ "Other",
           .default = NA_character_
         ),
-        raceG_norc = ifelse(hisp == "Hispanic", "Hispanic", paste0(race_norc, ", non-Hisp."))
+        raceG_norc = dplyr::case_when(
+          is.na(race_norc) & hisp != "Hispanic" ~ NA_character_,
+          hisp == "Hispanic" ~ "Hispanic",
+          .default = paste0(race_norc, ", non-Hisp.")
+        )
       )
   } else {
     transformed <- transformed %>%
@@ -182,7 +190,11 @@ transform_raw_data <- function(raw_data, dictionary = NULL) {
           cqr010_c2b___105 == 1 ~ "Other",
           .default = NA_character_
         ),
-        raceG_c2_norc = ifelse(hisp_c2 == "Hispanic", "Hispanic", paste0(race_c2_norc, ", non-Hisp."))
+        raceG_c2_norc = dplyr::case_when(
+          is.na(race_c2_norc) & hisp_c2 != "Hispanic" ~ NA_character_,
+          hisp_c2 == "Hispanic" ~ "Hispanic",
+          .default = paste0(race_c2_norc, ", non-Hisp.")
+        )
       )
   } else {
     transformed <- transformed %>%

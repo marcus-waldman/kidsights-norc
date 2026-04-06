@@ -93,9 +93,16 @@ calculate_eligibility <- function(data) {
       # Criterion 4: Lives in Minnesota
       state_eligible = (mn_eqstate == 1) & !is.na(mn_eqstate),
 
+      # All inputs missing = eligibility unknown (NA), not FALSE
+      all_inputs_missing = is.na(eq003) & is.na(age_in_days_n) &
+                           is.na(eq002) & is.na(mn_eqstate),
+
       # Overall eligibility
-      eligible = parent_age_eligible & child_age_eligible &
-                 primary_caregiver_eligible & state_eligible
+      eligible = ifelse(
+        all_inputs_missing, NA,
+        parent_age_eligible & child_age_eligible &
+          primary_caregiver_eligible & state_eligible
+      )
     ) %>%
     dplyr::select(
       pid, record_id,
@@ -246,7 +253,8 @@ calculate_survey_completion <- function(data) {
   # --- Count completed modules per participant ---
   # Always-required (non-module-6)
   n_always_done <- rowSums(
-    sapply(always_available, function(col) is_complete(completion_df[[col]])),
+    matrix(sapply(always_available, function(col) is_complete(completion_df[[col]])),
+           nrow = n),
     na.rm = TRUE
   )
 

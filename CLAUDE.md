@@ -22,6 +22,16 @@ monitoring_data <- generate_monitoring_report(
 )
 ```
 
+### Running Tests
+
+```bash
+# Synthetic tests (offline, no API needed)
+Rscript progress-monitoring/mn26/synthetic-test.R
+
+# Smoke test (requires REDCap API access)
+Rscript progress-monitoring/mn26/smoke-test.R
+```
+
 ### Required R Packages
 
 ```r
@@ -39,6 +49,8 @@ The monitoring system is organized into modular utility functions:
 - **`progress-monitoring/mn26/utils/redcap_utils.R`** - REDCap API credential loading and data extraction
 - **`progress-monitoring/mn26/utils/data_transforms.R`** - Raw REDCap data transformations (age, sex, race/ethnicity, education, marital status)
 - **`progress-monitoring/mn26/utils/safe_joins.R`** - Safe left join with collision detection and cardinality validation
+- **`progress-monitoring/mn26/synthetic-test.R`** - Offline synthetic data tests (105 assertions, no API needed)
+- **`progress-monitoring/mn26/smoke-test.R`** - Live smoke test against REDCap API
 
 ### Data Flow
 
