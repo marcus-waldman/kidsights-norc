@@ -6,8 +6,7 @@ Sample monitoring tools for NORC researchers tracking the Minnesota 2026 (MN26) 
 
 This repository provides standalone R scripts that connect to REDCap via API to monitor:
 
-- **Screener completion** - Has eligibility been determined?
-- **Eligibility status** - 4 criteria: parent age ≥19, child age 0-5 years, primary caregiver, Minnesota residence
+- **Eligibility form** - Raw variables from the Eligibility Form NORC instrument
 - **Survey completion** - Module-by-module tracking with completion percentages
 - **Demographics** - Child and parent characteristics for sample monitoring
 
@@ -22,8 +21,7 @@ This repository provides standalone R scripts that connect to REDCap via API to 
 | REDCap API connection | ✅ 2,654 records retrieved |
 | Data dictionary | ✅ 865 fields (648 after @HIDDEN filtering) |
 | Data transforms | ✅ All demographic derivations succeed |
-| Eligibility | ✅ Calculated (0 eligible in test data — most fields unpopulated) |
-| Screener status | ✅ 2,654 records |
+| Eligibility form | ✅ Raw variables extracted from data dictionary |
 | Survey completion | ✅ 7 complete, per-participant denominator (7-11) |
 | Child demographics | ✅ 2,654 records (child 1 + child 2 columns) |
 | Parent demographics | ✅ 2,654 records |
@@ -88,9 +86,8 @@ monitoring_data <- generate_monitoring_report(
 )
 
 # View results
-table(monitoring_data$screener_status$screener_status)
-table(monitoring_data$eligibility$eligible)
-table(monitoring_data$survey_completion$survey_status)
+View(monitoring_data$eligibility_form)
+table(monitoring_data$survey_completion$modules_complete == monitoring_data$survey_completion$n_required)
 View(monitoring_data$child_demographics)
 View(monitoring_data$parent_demographics)
 ```
@@ -128,14 +125,13 @@ kidsights-norc/
 
 ### Comprehensive Monitoring Output
 
-The script returns 6 data frames:
+The script returns 5 data frames:
 
-1. **Screener Status** - Tracks whether eligibility has been determined
-2. **Eligibility** - Four eligibility criteria with overall determination
-3. **Survey Completion** - Module-by-module completion tracking
-4. **Child Demographics** - Age and sex distribution
-5. **Parent Demographics** - Age, sex, race/ethnicity, education, marital status
-6. **Compensation Information** - Gift card store choice and contact details
+1. **Eligibility Form** - All raw variables from the Eligibility Form NORC instrument
+2. **Survey Completion** - Module-by-module completion tracking
+3. **Child Demographics** - Age and sex distribution
+4. **Parent Demographics** - Age, sex, race/ethnicity, education, marital status
+5. **Compensation Information** - Gift card store choice and contact details
 
 ## Required REDCap Variables
 

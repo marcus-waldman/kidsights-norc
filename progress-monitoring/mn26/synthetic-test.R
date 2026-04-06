@@ -200,31 +200,9 @@ assert_equal(elig_result$primary_caregiver_eligible[7], FALSE, "eq002=0 → inel
 cat("[OK] Eligibility tests passed\n")
 
 # ============================================================================
-# TEST SECTION 2: SCREENER STATUS
+# TEST SECTION 2: SEX TRANSFORMS
 # ============================================================================
-cat("\n=== 2. SCREENER STATUS ===\n")
-
-# Use eligibility results from section 1
-screener_result <- calculate_screener_status(elig_result)
-assert_equal(nrow(screener_result), 7L, "screener row count")
-
-# Row 1: eligible → screener complete
-assert_equal(screener_result$screener_complete[1], TRUE, "eligible → complete")
-assert_equal(screener_result$screener_status[1], "Complete", "eligible → Complete label")
-
-# Row 2: all-NA → eligible is NA → screener incomplete
-assert_equal(screener_result$screener_complete[2], FALSE, "all-NA → screener incomplete")
-assert_equal(screener_result$screener_status[2], "Incomplete", "all-NA → Incomplete label")
-
-# Row 3: ineligible (not NA) → screener complete
-assert_equal(screener_result$screener_complete[3], TRUE, "ineligible → screener complete")
-
-cat("[OK] Screener status tests passed\n")
-
-# ============================================================================
-# TEST SECTION 3: SEX TRANSFORMS
-# ============================================================================
-cat("\n=== 3. SEX TRANSFORMS ===\n")
+cat("\n=== 2. SEX TRANSFORMS ===\n")
 
 sex_df <- build_synthetic_raw(n = 5, overrides = list(
   cqr009    = c(0, 1, NA, 99, 0),
@@ -257,7 +235,7 @@ cat("[OK] Sex transform tests passed\n")
 # ============================================================================
 # TEST SECTION 4: EDUCATION & MARITAL STATUS
 # ============================================================================
-cat("\n=== 4. EDUCATION & MARITAL STATUS ===\n")
+cat("\n=== 3. EDUCATION & MARITAL STATUS ===\n")
 
 educ_labels <- c(
   "8th grade or less", "9th-12th grade, No diploma",
@@ -302,7 +280,7 @@ cat("[OK] Education & marital status tests passed\n")
 # ============================================================================
 # TEST SECTION 5: RACE CHECKBOXES
 # ============================================================================
-cat("\n=== 5. RACE CHECKBOXES ===\n")
+cat("\n=== 4. RACE CHECKBOXES ===\n")
 
 race_df <- build_synthetic_raw(n = 6, overrides = list(
   # Row 1: No race selected, non-Hispanic → NA
@@ -357,7 +335,7 @@ cat("[OK] Race checkbox tests passed\n")
 # ============================================================================
 # TEST SECTION 6: PARENT AGE
 # ============================================================================
-cat("\n=== 6. PARENT AGE ===\n")
+cat("\n=== 5. PARENT AGE ===\n")
 
 age_df <- build_synthetic_raw(n = 3, overrides = list(
   cqr003 = c(25, NA, 45)
@@ -373,7 +351,7 @@ cat("[OK] Parent age tests passed\n")
 # ============================================================================
 # TEST SECTION 7: CHILD 2 PRESENCE
 # ============================================================================
-cat("\n=== 7. CHILD 2 PRESENCE ===\n")
+cat("\n=== 6. CHILD 2 PRESENCE ===\n")
 
 c2_df <- build_synthetic_raw(n = 3, overrides = list(
   # Row 1: no child 2 (empty string)
@@ -405,7 +383,7 @@ cat("[OK] Child 2 presence tests passed\n")
 # ============================================================================
 # TEST SECTION 8: SURVEY COMPLETION
 # ============================================================================
-cat("\n=== 8. SURVEY COMPLETION ===\n")
+cat("\n=== 7. SURVEY COMPLETION ===\n")
 
 # Row 1: all complete, no child 2, age outside NSCH range → n_required=7
 # Row 2: all incomplete (0) → 0% complete
@@ -439,11 +417,11 @@ assert_equal(nrow(survey_result), 5L, "survey row count")
 # Row 1: all complete, no NSCH, no child 2 → 7 required, 7 done
 assert_equal(survey_result$n_required[1], 7L, "row 1 n_required=7")
 assert_equal(survey_result$modules_complete[1], 7L, "row 1 modules_complete=7")
-assert_equal(survey_result$survey_complete[1], TRUE, "row 1 survey complete")
+assert_true(survey_result$modules_complete[1] == survey_result$n_required[1], "row 1 survey complete")
 
 # Row 2: all incomplete
 assert_equal(survey_result$modules_complete[2], 0L, "row 2 modules_complete=0")
-assert_equal(survey_result$survey_complete[2], FALSE, "row 2 survey incomplete")
+assert_true(survey_result$modules_complete[2] < survey_result$n_required[2], "row 2 survey incomplete")
 
 # Row 3: mixed
 assert_true(survey_result$modules_complete[3] > 0L & survey_result$modules_complete[3] < survey_result$n_required[3],
@@ -451,7 +429,7 @@ assert_true(survey_result$modules_complete[3] > 0L & survey_result$modules_compl
 
 # Row 4: child 2 + NSCH both → 6 always + 1 m6_c1 + 1 nsch_c1 + 1 c2_info + 1 m6_c2 + 1 nsch_c2 = 11
 assert_equal(survey_result$n_required[4], 11L, "row 4 n_required=11 (c2 + NSCH)")
-assert_equal(survey_result$survey_complete[4], TRUE, "row 4 fully complete")
+assert_true(survey_result$modules_complete[4] == survey_result$n_required[4], "row 4 fully complete")
 
 # Row 5: NSCH child 1 required (age 500 in 365-1065), no child 2 → 8
 assert_equal(survey_result$n_required[5], 8L, "row 5 n_required=8 (NSCH c1)")
@@ -461,7 +439,7 @@ cat("[OK] Survey completion tests passed\n")
 # ============================================================================
 # TEST SECTION 9: COMPENSATION
 # ============================================================================
-cat("\n=== 9. COMPENSATION ===\n")
+cat("\n=== 8. COMPENSATION ===\n")
 
 comp_df <- build_synthetic_raw(n = 6, overrides = list(
   store_choice = c(1, 2, 3, 4, NA, 99)
@@ -486,7 +464,7 @@ cat("[OK] Compensation tests passed\n")
 # ============================================================================
 # TEST SECTION 10: FULL INTEGRATION
 # ============================================================================
-cat("\n=== 10. FULL INTEGRATION ===\n")
+cat("\n=== 9. FULL INTEGRATION ===\n")
 
 # Single happy-path row through all pipeline functions
 integration_df <- build_synthetic_raw(n = 1)
@@ -496,17 +474,25 @@ transformed <- transform_raw_data(integration_df, dictionary = NULL)
 assert_true(is.data.frame(transformed), "transform returns data.frame")
 assert_equal(nrow(transformed), 1L, "transform row count")
 
-# Step 2: Eligibility
-eligibility <- calculate_eligibility(integration_df)
-assert_equal(eligibility$eligible[1], TRUE, "integration: eligible")
+# Step 2: Eligibility form extraction (uses mock dictionary)
+mock_dict <- list(
+  eq001 = list(field_name = "eq001", form_name = "eligibility_form_norc", field_type = "yesno"),
+  eq002 = list(field_name = "eq002", form_name = "eligibility_form_norc", field_type = "yesno"),
+  eq003 = list(field_name = "eq003", form_name = "eligibility_form_norc", field_type = "yesno"),
+  mn_eqstate = list(field_name = "mn_eqstate", form_name = "eligibility_form_norc", field_type = "yesno"),
+  age_in_days_n = list(field_name = "age_in_days_n", form_name = "eligibility_form_norc", field_type = "calc")
+)
+elig_form <- extract_eligibility_form(integration_df, mock_dict)
+assert_true("eq002" %in% names(elig_form), "integration: elig_form has eq002")
+assert_true("eq003" %in% names(elig_form), "integration: elig_form has eq003")
+assert_true("mn_eqstate" %in% names(elig_form), "integration: elig_form has mn_eqstate")
+assert_true("age_in_days_n" %in% names(elig_form), "integration: elig_form has age_in_days_n")
+assert_true("eligibility_form_norc_complete" %in% names(elig_form), "integration: elig_form has completion flag")
+assert_equal(nrow(elig_form), 1L, "integration: elig_form 1 row")
 
-# Step 3: Screener
-screener <- calculate_screener_status(eligibility)
-assert_equal(screener$screener_status[1], "Complete", "integration: screener complete")
-
-# Step 4: Survey completion
+# Step 3: Survey completion
 survey <- calculate_survey_completion(integration_df)
-assert_equal(survey$survey_complete[1], TRUE, "integration: survey complete")
+assert_true(survey$modules_complete[1] == survey$n_required[1], "integration: survey complete")
 
 # Step 5: Child demographics
 child_demo <- extract_child_demographics(transformed)
@@ -525,9 +511,8 @@ assert_true("marital_status_label_norc" %in% names(parent_demo), "integration: p
 comp_info <- extract_compensation_information(transformed)
 assert_true("store_choice_label" %in% names(comp_info), "integration: comp has store_choice_label")
 
-# Verify all 6 output data frames have 1 row
-assert_equal(nrow(screener), 1L, "integration: screener 1 row")
-assert_equal(nrow(eligibility), 1L, "integration: eligibility 1 row")
+# Verify all 5 output data frames have 1 row
+assert_equal(nrow(elig_form), 1L, "integration: elig_form 1 row")
 assert_equal(nrow(survey), 1L, "integration: survey 1 row")
 assert_equal(nrow(child_demo), 1L, "integration: child_demo 1 row")
 assert_equal(nrow(parent_demo), 1L, "integration: parent_demo 1 row")

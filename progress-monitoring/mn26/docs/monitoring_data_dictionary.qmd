@@ -14,7 +14,7 @@ format:
     embed-resources: true
 ---
 
-Data dictionary for the 6 data frames returned by `generate_monitoring_report()`.
+Data dictionary for the 5 data frames returned by `generate_monitoring_report()`.
 
 Each row in every data frame represents one participant, uniquely identified by the combination of `pid` + `record_id`. Neither `pid` nor `record_id` is unique on its own — `pid` identifies the REDCap project and `record_id` is unique only within a project.
 
@@ -22,9 +22,9 @@ Each row in every data frame represents one participant, uniquely identified by 
 Variables with a `_norc` suffix use MN26 NORC value codes that differ from the NE25 pipeline.
 :::
 
-## `$screener_status`
+## `$eligibility_form`
 
-Tracks whether eligibility has been determined for each participant.
+All raw variables from the "Eligibility Form NORC" REDCap instrument, identified via the data dictionary's `form_name` field.
 
 ### Columns
 
@@ -32,61 +32,24 @@ Tracks whether eligibility has been determined for each participant.
 |--------|----------------|------|-------------|--------|
 | `pid` | `pid` (from credentials CSV) | integer | REDCap project ID | Project-specific integer |
 | `record_id` | `record_id` | numeric | REDCap record ID | Unique within project |
-| `screener_complete` | Derived | logical | Whether eligibility is known (non-missing) | `TRUE`, `FALSE` |
-| `screener_status` | Derived from `screener_complete` | character | Label for screener completion | `"Complete"`, `"Incomplete"` |
+| *(dynamic)* | All fields where `form_name == "eligibility_form_norc"` | varies | Raw REDCap fields from the eligibility instrument | As stored in REDCap |
+| `eligibility_form_norc_complete` | REDCap instrument status | numeric | Instrument completion flag | 0 = Incomplete, 2 = Complete |
 
 : {.striped .hover}
 
 ### Derivation
 
-- `screener_complete`: `TRUE` if all 4 eligibility criteria have been answered (non-NA)
-- `screener_status`: `"Complete"` when `screener_complete == TRUE`, otherwise `"Incomplete"`
+Fields are selected dynamically from the data dictionary at runtime. Checkbox fields (e.g., race) are expanded to their `field___code` columns. The exact columns depend on the REDCap project configuration.
 
-{{< pagebreak >}}
+### Known Fields
 
-## `$eligibility`
+Common fields in this instrument include:
 
-Four eligibility criteria and overall eligibility determination.
-
-### Columns
-
-| Column | Source Variable | Type | Description | Values |
-|--------|----------------|------|-------------|--------|
-| `pid` | `pid` | integer | REDCap project ID | Project-specific integer |
-| `record_id` | `record_id` | numeric | REDCap record ID | Unique within project |
-| `parent_age_eligible` | `eq003` | logical | Parent age >= 19 | `TRUE`, `FALSE` |
-| `child_age_eligible` | `age_in_days_n` | logical | Child age 0--5 years | `TRUE`, `FALSE` |
-| `primary_caregiver_eligible` | `eq002` | logical | Respondent is primary caregiver | `TRUE`, `FALSE` |
-| `state_eligible` | `mn_eqstate` | logical | Lives in Minnesota | `TRUE`, `FALSE` |
-| `eligible` | Derived | logical | Overall eligibility (all 4 criteria) | `TRUE`, `FALSE` |
-
-: {.striped .hover}
-
-### Variable Mappings
-
-**`parent_age_eligible`** from `eq003` (yesno)
-
-:   `eq003 == 1` AND not missing $\rightarrow$ `TRUE`; otherwise $\rightarrow$ `FALSE`
-
-**`child_age_eligible`** from `age_in_days_n` (calculated field)
-
-:   `age_in_days_n <= 1825` (5 years) AND not missing $\rightarrow$ `TRUE`; otherwise $\rightarrow$ `FALSE`
-
-**`primary_caregiver_eligible`** from `eq002` (yesno)
-
-:   `eq002 == 1` AND not missing $\rightarrow$ `TRUE`; otherwise $\rightarrow$ `FALSE`
-
-**`state_eligible`** from `mn_eqstate` (yesno)
-
-:   `mn_eqstate == 1` AND not missing $\rightarrow$ `TRUE`; otherwise $\rightarrow$ `FALSE`
-
-::: {.callout-tip}
-NE25 used `eqstate` (Nebraska residence); MN26 uses `mn_eqstate` (Minnesota residence).
-:::
-
-**`eligible`**
-
-:   `parent_age_eligible & child_age_eligible & primary_caregiver_eligible & state_eligible`
+- `eq002` — Primary caregiver status (yesno)
+- `eq003` — Parent age ≥ 19 (yesno)
+- `mn_eqstate` — Minnesota residence (yesno)
+- `age_in_days_n` — Child 1 age in days (calculated)
+- `age_in_days_c2_n` — Child 2 age in days (calculated, if applicable)
 
 {{< pagebreak >}}
 
@@ -104,8 +67,6 @@ Module-by-module completion tracking with per-participant denominator.
 | `modules_complete` | Derived | integer | Count of completed modules | 0 to `n_required` |
 | `pct_complete` | Derived | numeric | Percentage of modules complete | 0 to 100 |
 | `last_module_complete` | Derived | character | Name of last completed instrument | See instrument order below |
-| `survey_complete` | Derived | logical | All required modules complete | `TRUE`, `FALSE` |
-| `survey_status` | Derived | character | Label for survey completion | `"Complete"`, `"Incomplete"` |
 
 : {.striped .hover}
 
@@ -139,7 +100,6 @@ Instruments 26--29 (Eligibility Form, Home Learning Environment, Module 7, Birth
   - +2 if child 2 exists (child info 2 + module 6 child 2)
   - +1 if child 2 NSCH-eligible
 - `pct_complete = modules_complete / n_required * 100`
-- `survey_complete`: `TRUE` when `modules_complete == n_required`
 
 {{< pagebreak >}}
 

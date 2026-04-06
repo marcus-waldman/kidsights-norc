@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-04-02">
+<meta name="dcterms.date" content="2026-04-06">
 
 <title>MN26 Monitoring Data Dictionary</title>
 <style>
@@ -2283,36 +2283,32 @@ window.Quarto = {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#screener_status" id="toc-screener_status" class="nav-link active" data-scroll-target="#screener_status"><span class="header-section-number">1</span> <code>$screener_status</code></a>
+  <li><a href="#eligibility_form" id="toc-eligibility_form" class="nav-link active" data-scroll-target="#eligibility_form"><span class="header-section-number">1</span> <code>$eligibility_form</code></a>
   <ul class="collapse">
   <li><a href="#columns" id="toc-columns" class="nav-link" data-scroll-target="#columns"><span class="header-section-number">1.1</span> Columns</a></li>
   <li><a href="#derivation" id="toc-derivation" class="nav-link" data-scroll-target="#derivation"><span class="header-section-number">1.2</span> Derivation</a></li>
+  <li><a href="#known-fields" id="toc-known-fields" class="nav-link" data-scroll-target="#known-fields"><span class="header-section-number">1.3</span> Known Fields</a></li>
   </ul></li>
-  <li><a href="#eligibility" id="toc-eligibility" class="nav-link" data-scroll-target="#eligibility"><span class="header-section-number">2</span> <code>$eligibility</code></a>
+  <li><a href="#survey_completion" id="toc-survey_completion" class="nav-link" data-scroll-target="#survey_completion"><span class="header-section-number">2</span> <code>$survey_completion</code></a>
   <ul class="collapse">
   <li><a href="#columns-1" id="toc-columns-1" class="nav-link" data-scroll-target="#columns-1"><span class="header-section-number">2.1</span> Columns</a></li>
-  <li><a href="#variable-mappings" id="toc-variable-mappings" class="nav-link" data-scroll-target="#variable-mappings"><span class="header-section-number">2.2</span> Variable Mappings</a></li>
+  <li><a href="#mn26-instrument-order-125" id="toc-mn26-instrument-order-125" class="nav-link" data-scroll-target="#mn26-instrument-order-125"><span class="header-section-number">2.2</span> MN26 Instrument Order (1–25)</a></li>
+  <li><a href="#derivation-1" id="toc-derivation-1" class="nav-link" data-scroll-target="#derivation-1"><span class="header-section-number">2.3</span> Derivation</a></li>
   </ul></li>
-  <li><a href="#survey_completion" id="toc-survey_completion" class="nav-link" data-scroll-target="#survey_completion"><span class="header-section-number">3</span> <code>$survey_completion</code></a>
+  <li><a href="#child_demographics" id="toc-child_demographics" class="nav-link" data-scroll-target="#child_demographics"><span class="header-section-number">3</span> <code>$child_demographics</code></a>
   <ul class="collapse">
   <li><a href="#columns-2" id="toc-columns-2" class="nav-link" data-scroll-target="#columns-2"><span class="header-section-number">3.1</span> Columns</a></li>
-  <li><a href="#mn26-instrument-order-125" id="toc-mn26-instrument-order-125" class="nav-link" data-scroll-target="#mn26-instrument-order-125"><span class="header-section-number">3.2</span> MN26 Instrument Order (1–25)</a></li>
-  <li><a href="#derivation-1" id="toc-derivation-1" class="nav-link" data-scroll-target="#derivation-1"><span class="header-section-number">3.3</span> Derivation</a></li>
+  <li><a href="#variable-mappings" id="toc-variable-mappings" class="nav-link" data-scroll-target="#variable-mappings"><span class="header-section-number">3.2</span> Variable Mappings</a></li>
   </ul></li>
-  <li><a href="#child_demographics" id="toc-child_demographics" class="nav-link" data-scroll-target="#child_demographics"><span class="header-section-number">4</span> <code>$child_demographics</code></a>
+  <li><a href="#parent_demographics" id="toc-parent_demographics" class="nav-link" data-scroll-target="#parent_demographics"><span class="header-section-number">4</span> <code>$parent_demographics</code></a>
   <ul class="collapse">
   <li><a href="#columns-3" id="toc-columns-3" class="nav-link" data-scroll-target="#columns-3"><span class="header-section-number">4.1</span> Columns</a></li>
   <li><a href="#variable-mappings-1" id="toc-variable-mappings-1" class="nav-link" data-scroll-target="#variable-mappings-1"><span class="header-section-number">4.2</span> Variable Mappings</a></li>
   </ul></li>
-  <li><a href="#parent_demographics" id="toc-parent_demographics" class="nav-link" data-scroll-target="#parent_demographics"><span class="header-section-number">5</span> <code>$parent_demographics</code></a>
+  <li><a href="#compensation_information" id="toc-compensation_information" class="nav-link" data-scroll-target="#compensation_information"><span class="header-section-number">5</span> <code>$compensation_information</code></a>
   <ul class="collapse">
   <li><a href="#columns-4" id="toc-columns-4" class="nav-link" data-scroll-target="#columns-4"><span class="header-section-number">5.1</span> Columns</a></li>
   <li><a href="#variable-mappings-2" id="toc-variable-mappings-2" class="nav-link" data-scroll-target="#variable-mappings-2"><span class="header-section-number">5.2</span> Variable Mappings</a></li>
-  </ul></li>
-  <li><a href="#compensation_information" id="toc-compensation_information" class="nav-link" data-scroll-target="#compensation_information"><span class="header-section-number">6</span> <code>$compensation_information</code></a>
-  <ul class="collapse">
-  <li><a href="#columns-5" id="toc-columns-5" class="nav-link" data-scroll-target="#columns-5"><span class="header-section-number">6.1</span> Columns</a></li>
-  <li><a href="#variable-mappings-3" id="toc-variable-mappings-3" class="nav-link" data-scroll-target="#variable-mappings-3"><span class="header-section-number">6.2</span> Variable Mappings</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -2335,7 +2331,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">April 2, 2026</p>
+      <p class="date">April 6, 2026</p>
     </div>
   </div>
   
@@ -2347,7 +2343,7 @@ window.Quarto = {
 </header>
 
 
-<p>Data dictionary for the 6 data frames returned by <code>generate_monitoring_report()</code>.</p>
+<p>Data dictionary for the 5 data frames returned by <code>generate_monitoring_report()</code>.</p>
 <p>Each row in every data frame represents one participant, uniquely identified by the combination of <code>pid</code> + <code>record_id</code>. Neither <code>pid</code> nor <code>record_id</code> is unique on its own — <code>pid</code> identifies the REDCap project and <code>record_id</code> is unique only within a project.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
@@ -2362,9 +2358,9 @@ Note
 <p>Variables with a <code>_norc</code> suffix use MN26 NORC value codes that differ from the NE25 pipeline.</p>
 </div>
 </div>
-<section id="screener_status" class="level2" data-number="1">
-<h2 data-number="1" class="anchored" data-anchor-id="screener_status"><span class="header-section-number">1</span> <code>$screener_status</code></h2>
-<p>Tracks whether eligibility has been determined for each participant.</p>
+<section id="eligibility_form" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="eligibility_form"><span class="header-section-number">1</span> <code>$eligibility_form</code></h2>
+<p>All raw variables from the “Eligibility Form NORC” REDCap instrument, identified via the data dictionary’s <code>form_name</code> field.</p>
 <section id="columns" class="level3" data-number="1.1">
 <h3 data-number="1.1" class="anchored" data-anchor-id="columns"><span class="header-section-number">1.1</span> Columns</h3>
 <table class="table-striped table-hover caption-top table">
@@ -2400,153 +2396,44 @@ Note
 <td>Unique within project</td>
 </tr>
 <tr class="odd">
-<td><code>screener_complete</code></td>
-<td>Derived</td>
-<td>logical</td>
-<td>Whether eligibility is known (non-missing)</td>
-<td><code>TRUE</code>, <code>FALSE</code></td>
+<td><em>(dynamic)</em></td>
+<td>All fields where <code>form_name == &quot;eligibility_form_norc&quot;</code></td>
+<td>varies</td>
+<td>Raw REDCap fields from the eligibility instrument</td>
+<td>As stored in REDCap</td>
 </tr>
 <tr class="even">
-<td><code>screener_status</code></td>
-<td>Derived from <code>screener_complete</code></td>
-<td>character</td>
-<td>Label for screener completion</td>
-<td><code>&quot;Complete&quot;</code>, <code>&quot;Incomplete&quot;</code></td>
+<td><code>eligibility_form_norc_complete</code></td>
+<td>REDCap instrument status</td>
+<td>numeric</td>
+<td>Instrument completion flag</td>
+<td>0 = Incomplete, 2 = Complete</td>
 </tr>
 </tbody>
 </table>
 </section>
 <section id="derivation" class="level3" data-number="1.2">
 <h3 data-number="1.2" class="anchored" data-anchor-id="derivation"><span class="header-section-number">1.2</span> Derivation</h3>
+<p>Fields are selected dynamically from the data dictionary at runtime. Checkbox fields (e.g., race) are expanded to their <code>field___code</code> columns. The exact columns depend on the REDCap project configuration.</p>
+</section>
+<section id="known-fields" class="level3" data-number="1.3">
+<h3 data-number="1.3" class="anchored" data-anchor-id="known-fields"><span class="header-section-number">1.3</span> Known Fields</h3>
+<p>Common fields in this instrument include:</p>
 <ul>
-<li><code>screener_complete</code>: <code>TRUE</code> if all 4 eligibility criteria have been answered (non-NA)</li>
-<li><code>screener_status</code>: <code>&quot;Complete&quot;</code> when <code>screener_complete == TRUE</code>, otherwise <code>&quot;Incomplete&quot;</code></li>
+<li><code>eq002</code> — Primary caregiver status (yesno)</li>
+<li><code>eq003</code> — Parent age ≥ 19 (yesno)</li>
+<li><code>mn_eqstate</code> — Minnesota residence (yesno)</li>
+<li><code>age_in_days_n</code> — Child 1 age in days (calculated)</li>
+<li><code>age_in_days_c2_n</code> — Child 2 age in days (calculated, if applicable)</li>
 </ul>
 <div style="page-break-after: always;"></div>
 </section>
 </section>
-<section id="eligibility" class="level2" data-number="2">
-<h2 data-number="2" class="anchored" data-anchor-id="eligibility"><span class="header-section-number">2</span> <code>$eligibility</code></h2>
-<p>Four eligibility criteria and overall eligibility determination.</p>
+<section id="survey_completion" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="survey_completion"><span class="header-section-number">2</span> <code>$survey_completion</code></h2>
+<p>Module-by-module completion tracking with per-participant denominator.</p>
 <section id="columns-1" class="level3" data-number="2.1">
 <h3 data-number="2.1" class="anchored" data-anchor-id="columns-1"><span class="header-section-number">2.1</span> Columns</h3>
-<table class="table-striped table-hover caption-top table">
-<colgroup>
-<col style="width: 15%">
-<col style="width: 31%">
-<col style="width: 11%">
-<col style="width: 25%">
-<col style="width: 15%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Column</th>
-<th>Source Variable</th>
-<th>Type</th>
-<th>Description</th>
-<th>Values</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>pid</code></td>
-<td><code>pid</code></td>
-<td>integer</td>
-<td>REDCap project ID</td>
-<td>Project-specific integer</td>
-</tr>
-<tr class="even">
-<td><code>record_id</code></td>
-<td><code>record_id</code></td>
-<td>numeric</td>
-<td>REDCap record ID</td>
-<td>Unique within project</td>
-</tr>
-<tr class="odd">
-<td><code>parent_age_eligible</code></td>
-<td><code>eq003</code></td>
-<td>logical</td>
-<td>Parent age &gt;= 19</td>
-<td><code>TRUE</code>, <code>FALSE</code></td>
-</tr>
-<tr class="even">
-<td><code>child_age_eligible</code></td>
-<td><code>age_in_days_n</code></td>
-<td>logical</td>
-<td>Child age 0–5 years</td>
-<td><code>TRUE</code>, <code>FALSE</code></td>
-</tr>
-<tr class="odd">
-<td><code>primary_caregiver_eligible</code></td>
-<td><code>eq002</code></td>
-<td>logical</td>
-<td>Respondent is primary caregiver</td>
-<td><code>TRUE</code>, <code>FALSE</code></td>
-</tr>
-<tr class="even">
-<td><code>state_eligible</code></td>
-<td><code>mn_eqstate</code></td>
-<td>logical</td>
-<td>Lives in Minnesota</td>
-<td><code>TRUE</code>, <code>FALSE</code></td>
-</tr>
-<tr class="odd">
-<td><code>eligible</code></td>
-<td>Derived</td>
-<td>logical</td>
-<td>Overall eligibility (all 4 criteria)</td>
-<td><code>TRUE</code>, <code>FALSE</code></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="variable-mappings" class="level3" data-number="2.2">
-<h3 data-number="2.2" class="anchored" data-anchor-id="variable-mappings"><span class="header-section-number">2.2</span> Variable Mappings</h3>
-<dl>
-<dt><strong><code>parent_age_eligible</code></strong> from <code>eq003</code> (yesno)</dt>
-<dd>
-<p><code>eq003 == 1</code> AND not missing <span class="math inline">\(\rightarrow\)</span> <code>TRUE</code>; otherwise <span class="math inline">\(\rightarrow\)</span> <code>FALSE</code></p>
-</dd>
-<dt><strong><code>child_age_eligible</code></strong> from <code>age_in_days_n</code> (calculated field)</dt>
-<dd>
-<p><code>age_in_days_n &lt;= 1825</code> (5 years) AND not missing <span class="math inline">\(\rightarrow\)</span> <code>TRUE</code>; otherwise <span class="math inline">\(\rightarrow\)</span> <code>FALSE</code></p>
-</dd>
-<dt><strong><code>primary_caregiver_eligible</code></strong> from <code>eq002</code> (yesno)</dt>
-<dd>
-<p><code>eq002 == 1</code> AND not missing <span class="math inline">\(\rightarrow\)</span> <code>TRUE</code>; otherwise <span class="math inline">\(\rightarrow\)</span> <code>FALSE</code></p>
-</dd>
-<dt><strong><code>state_eligible</code></strong> from <code>mn_eqstate</code> (yesno)</dt>
-<dd>
-<p><code>mn_eqstate == 1</code> AND not missing <span class="math inline">\(\rightarrow\)</span> <code>TRUE</code>; otherwise <span class="math inline">\(\rightarrow\)</span> <code>FALSE</code></p>
-</dd>
-</dl>
-<div class="callout callout-style-default callout-tip callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Tip
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>NE25 used <code>eqstate</code> (Nebraska residence); MN26 uses <code>mn_eqstate</code> (Minnesota residence).</p>
-</div>
-</div>
-<dl>
-<dt><strong><code>eligible</code></strong></dt>
-<dd>
-<p><code>parent_age_eligible &amp; child_age_eligible &amp; primary_caregiver_eligible &amp; state_eligible</code></p>
-</dd>
-</dl>
-<div style="page-break-after: always;"></div>
-</section>
-</section>
-<section id="survey_completion" class="level2" data-number="3">
-<h2 data-number="3" class="anchored" data-anchor-id="survey_completion"><span class="header-section-number">3</span> <code>$survey_completion</code></h2>
-<p>Module-by-module completion tracking with per-participant denominator.</p>
-<section id="columns-2" class="level3" data-number="3.1">
-<h3 data-number="3.1" class="anchored" data-anchor-id="columns-2"><span class="header-section-number">3.1</span> Columns</h3>
 <table class="table-striped table-hover caption-top table">
 <colgroup>
 <col style="width: 15%">
@@ -2607,25 +2494,11 @@ Tip
 <td>Name of last completed instrument</td>
 <td>See instrument order below</td>
 </tr>
-<tr class="odd">
-<td><code>survey_complete</code></td>
-<td>Derived</td>
-<td>logical</td>
-<td>All required modules complete</td>
-<td><code>TRUE</code>, <code>FALSE</code></td>
-</tr>
-<tr class="even">
-<td><code>survey_status</code></td>
-<td>Derived</td>
-<td>character</td>
-<td>Label for survey completion</td>
-<td><code>&quot;Complete&quot;</code>, <code>&quot;Incomplete&quot;</code></td>
-</tr>
 </tbody>
 </table>
 </section>
-<section id="mn26-instrument-order-125" class="level3" data-number="3.2">
-<h3 data-number="3.2" class="anchored" data-anchor-id="mn26-instrument-order-125"><span class="header-section-number">3.2</span> MN26 Instrument Order (1–25)</h3>
+<section id="mn26-instrument-order-125" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="mn26-instrument-order-125"><span class="header-section-number">2.2</span> MN26 Instrument Order (1–25)</h3>
 <table class="table-striped table-hover caption-top table">
 <colgroup>
 <col style="width: 5%">
@@ -2712,8 +2585,8 @@ Tip
 </table>
 <p>Instruments 26–29 (Eligibility Form, Home Learning Environment, Module 7, Birthdate Confirmation) are <strong>ignored</strong> — retained in REDCap but disconnected from branching logic.</p>
 </section>
-<section id="derivation-1" class="level3" data-number="3.3">
-<h3 data-number="3.3" class="anchored" data-anchor-id="derivation-1"><span class="header-section-number">3.3</span> Derivation</h3>
+<section id="derivation-1" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="derivation-1"><span class="header-section-number">2.3</span> Derivation</h3>
 <ul>
 <li>A module is “complete” when its REDCap instrument status = 2</li>
 <li>Module 6 age bands are collapsed: complete if <strong>any</strong> sub-instrument for that child == 2</li>
@@ -2725,16 +2598,15 @@ Tip
 <li>+1 if child 2 NSCH-eligible</li>
 </ul></li>
 <li><code>pct_complete = modules_complete / n_required * 100</code></li>
-<li><code>survey_complete</code>: <code>TRUE</code> when <code>modules_complete == n_required</code></li>
 </ul>
 <div style="page-break-after: always;"></div>
 </section>
 </section>
-<section id="child_demographics" class="level2" data-number="4">
-<h2 data-number="4" class="anchored" data-anchor-id="child_demographics"><span class="header-section-number">4</span> <code>$child_demographics</code></h2>
+<section id="child_demographics" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="child_demographics"><span class="header-section-number">3</span> <code>$child_demographics</code></h2>
 <p>Age, sex, and race/ethnicity for child 1 and child 2.</p>
-<section id="columns-3" class="level3" data-number="4.1">
-<h3 data-number="4.1" class="anchored" data-anchor-id="columns-3"><span class="header-section-number">4.1</span> Columns</h3>
+<section id="columns-2" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="columns-2"><span class="header-section-number">3.1</span> Columns</h3>
 <table class="table-striped table-hover caption-top table">
 <colgroup>
 <col style="width: 15%">
@@ -2840,10 +2712,10 @@ Tip
 </tbody>
 </table>
 </section>
-<section id="variable-mappings-1" class="level3" data-number="4.2">
-<h3 data-number="4.2" class="anchored" data-anchor-id="variable-mappings-1"><span class="header-section-number">4.2</span> Variable Mappings</h3>
-<section id="age" class="level4" data-number="4.2.1">
-<h4 data-number="4.2.1" class="anchored" data-anchor-id="age"><span class="header-section-number">4.2.1</span> Age</h4>
+<section id="variable-mappings" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="variable-mappings"><span class="header-section-number">3.2</span> Variable Mappings</h3>
+<section id="age" class="level4" data-number="3.2.1">
+<h4 data-number="3.2.1" class="anchored" data-anchor-id="age"><span class="header-section-number">3.2.1</span> Age</h4>
 <p><code>age_years</code> = <code>age_in_days_n / 365.25</code></p>
 <div class="callout callout-style-default callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center">
@@ -2859,8 +2731,8 @@ Tip
 </div>
 </div>
 </section>
-<section id="sex" class="level4" data-number="4.2.2">
-<h4 data-number="4.2.2" class="anchored" data-anchor-id="sex"><span class="header-section-number">4.2.2</span> Sex</h4>
+<section id="sex" class="level4" data-number="3.2.2">
+<h4 data-number="3.2.2" class="anchored" data-anchor-id="sex"><span class="header-section-number">3.2.2</span> Sex</h4>
 <p><code>sex_norc</code> from <code>cqr009</code> (radio). Child 2 <code>sex_c2_norc</code> from <code>cqr009_c2</code> uses the same codes.</p>
 <table class="table-striped table-hover caption-top table">
 <thead>
@@ -2894,8 +2766,8 @@ Important
 </div>
 </div>
 </section>
-<section id="race" class="level4" data-number="4.2.3">
-<h4 data-number="4.2.3" class="anchored" data-anchor-id="race"><span class="header-section-number">4.2.3</span> Race</h4>
+<section id="race" class="level4" data-number="3.2.3">
+<h4 data-number="3.2.3" class="anchored" data-anchor-id="race"><span class="header-section-number">3.2.3</span> Race</h4>
 <p><code>race_norc</code> from <code>cqr010b</code> (checkbox, check all that apply). Child 2 <code>race_c2_norc</code> from <code>cqr010_c2b___*</code> uses the same codes.</p>
 <table class="table-striped table-hover caption-top table">
 <thead>
@@ -2956,8 +2828,8 @@ Tip
 </div>
 </div>
 </section>
-<section id="ethnicity" class="level4" data-number="4.2.4">
-<h4 data-number="4.2.4" class="anchored" data-anchor-id="ethnicity"><span class="header-section-number">4.2.4</span> Ethnicity</h4>
+<section id="ethnicity" class="level4" data-number="3.2.4">
+<h4 data-number="3.2.4" class="anchored" data-anchor-id="ethnicity"><span class="header-section-number">3.2.4</span> Ethnicity</h4>
 <p><code>hisp</code> from <code>cqr011</code> (radio). Child 2 <code>hisp_c2</code> from <code>cqr011_c2</code> uses the same codes.</p>
 <table class="table-striped table-hover caption-top table">
 <thead>
@@ -2978,8 +2850,8 @@ Tip
 </tbody>
 </table>
 </section>
-<section id="combined-raceethnicity" class="level4" data-number="4.2.5">
-<h4 data-number="4.2.5" class="anchored" data-anchor-id="combined-raceethnicity"><span class="header-section-number">4.2.5</span> Combined Race/Ethnicity</h4>
+<section id="combined-raceethnicity" class="level4" data-number="3.2.5">
+<h4 data-number="3.2.5" class="anchored" data-anchor-id="combined-raceethnicity"><span class="header-section-number">3.2.5</span> Combined Race/Ethnicity</h4>
 <p><code>raceG_norc</code> derived from <code>race_norc</code> + <code>hisp</code>:</p>
 <ul>
 <li>If <code>hisp == &quot;Hispanic&quot;</code> <span class="math inline">\(\rightarrow\)</span> <code>&quot;Hispanic&quot;</code></li>
@@ -2989,11 +2861,11 @@ Tip
 </section>
 </section>
 </section>
-<section id="parent_demographics" class="level2" data-number="5">
-<h2 data-number="5" class="anchored" data-anchor-id="parent_demographics"><span class="header-section-number">5</span> <code>$parent_demographics</code></h2>
+<section id="parent_demographics" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="parent_demographics"><span class="header-section-number">4</span> <code>$parent_demographics</code></h2>
 <p>Demographics for the primary caregiver (respondent).</p>
-<section id="columns-4" class="level3" data-number="5.1">
-<h3 data-number="5.1" class="anchored" data-anchor-id="columns-4"><span class="header-section-number">5.1</span> Columns</h3>
+<section id="columns-3" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="columns-3"><span class="header-section-number">4.1</span> Columns</h3>
 <table class="table-striped table-hover caption-top table">
 <colgroup>
 <col style="width: 15%">
@@ -3064,10 +2936,10 @@ Tip
 </tbody>
 </table>
 </section>
-<section id="variable-mappings-2" class="level3" data-number="5.2">
-<h3 data-number="5.2" class="anchored" data-anchor-id="variable-mappings-2"><span class="header-section-number">5.2</span> Variable Mappings</h3>
-<section id="gender" class="level4" data-number="5.2.1">
-<h4 data-number="5.2.1" class="anchored" data-anchor-id="gender"><span class="header-section-number">5.2.1</span> Gender</h4>
+<section id="variable-mappings-1" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="variable-mappings-1"><span class="header-section-number">4.2</span> Variable Mappings</h3>
+<section id="gender" class="level4" data-number="4.2.1">
+<h4 data-number="4.2.1" class="anchored" data-anchor-id="gender"><span class="header-section-number">4.2.1</span> Gender</h4>
 <p><code>gender</code> (<code>a1_gender_norc</code>) from <code>mn2</code> (radio):</p>
 <table class="table-striped table-hover caption-top table">
 <thead>
@@ -3105,8 +2977,8 @@ Tip
 </div>
 </div>
 </section>
-<section id="raceethnicity" class="level4" data-number="5.2.2">
-<h4 data-number="5.2.2" class="anchored" data-anchor-id="raceethnicity"><span class="header-section-number">5.2.2</span> Race/Ethnicity</h4>
+<section id="raceethnicity" class="level4" data-number="4.2.2">
+<h4 data-number="4.2.2" class="anchored" data-anchor-id="raceethnicity"><span class="header-section-number">4.2.2</span> Race/Ethnicity</h4>
 <p><code>race_ethnicity</code> (<code>a1_raceG_norc</code>) from <code>sq002b___*</code> + <code>sq003</code>.</p>
 <p><strong>Race checkboxes</strong> (<code>sq002b</code>, check all that apply):</p>
 <table class="table-striped table-hover caption-top table">
@@ -3192,8 +3064,8 @@ Tip
 </div>
 </div>
 </section>
-<section id="education" class="level4" data-number="5.2.3">
-<h4 data-number="5.2.3" class="anchored" data-anchor-id="education"><span class="header-section-number">5.2.3</span> Education</h4>
+<section id="education" class="level4" data-number="4.2.3">
+<h4 data-number="4.2.3" class="anchored" data-anchor-id="education"><span class="header-section-number">4.2.3</span> Education</h4>
 <p><code>education</code> (<code>educ_a1_norc</code>) from <code>cqr004</code> (radio):</p>
 <table class="table-striped table-hover caption-top table">
 <thead>
@@ -3255,8 +3127,8 @@ Tip
 </div>
 </div>
 </section>
-<section id="marital-status" class="level4" data-number="5.2.4">
-<h4 data-number="5.2.4" class="anchored" data-anchor-id="marital-status"><span class="header-section-number">5.2.4</span> Marital Status</h4>
+<section id="marital-status" class="level4" data-number="4.2.4">
+<h4 data-number="4.2.4" class="anchored" data-anchor-id="marital-status"><span class="header-section-number">4.2.4</span> Marital Status</h4>
 <p><code>marital_status_label_norc</code> from <code>cqfa001</code> (radio):</p>
 <table class="table-striped table-hover caption-top table">
 <thead>
@@ -3309,11 +3181,11 @@ Tip
 </section>
 </section>
 </section>
-<section id="compensation_information" class="level2" data-number="6">
-<h2 data-number="6" class="anchored" data-anchor-id="compensation_information"><span class="header-section-number">6</span> <code>$compensation_information</code></h2>
+<section id="compensation_information" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="compensation_information"><span class="header-section-number">5</span> <code>$compensation_information</code></h2>
 <p>Gift card and contact information from Module 9.</p>
-<section id="columns-5" class="level3" data-number="6.1">
-<h3 data-number="6.1" class="anchored" data-anchor-id="columns-5"><span class="header-section-number">6.1</span> Columns</h3>
+<section id="columns-4" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="columns-4"><span class="header-section-number">5.1</span> Columns</h3>
 <table class="table-striped table-hover caption-top table">
 <colgroup>
 <col style="width: 15%">
@@ -3390,10 +3262,10 @@ Warning
 </div>
 </div>
 </section>
-<section id="variable-mappings-3" class="level3" data-number="6.2">
-<h3 data-number="6.2" class="anchored" data-anchor-id="variable-mappings-3"><span class="header-section-number">6.2</span> Variable Mappings</h3>
-<section id="store-choice" class="level4" data-number="6.2.1">
-<h4 data-number="6.2.1" class="anchored" data-anchor-id="store-choice"><span class="header-section-number">6.2.1</span> Store Choice</h4>
+<section id="variable-mappings-2" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="variable-mappings-2"><span class="header-section-number">5.2</span> Variable Mappings</h3>
+<section id="store-choice" class="level4" data-number="5.2.1">
+<h4 data-number="5.2.1" class="anchored" data-anchor-id="store-choice"><span class="header-section-number">5.2.1</span> Store Choice</h4>
 <p><code>store_choice_label</code> from <code>store_choice</code> (dropdown):</p>
 <table class="table-striped table-hover caption-top table">
 <thead>

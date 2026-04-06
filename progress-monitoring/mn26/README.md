@@ -134,7 +134,7 @@ That's it!
 
 - `monitoring_report.R` - Main standalone script for generating monitoring reports
 - `smoke-test.R` - Smoke test against live REDCap (requires API access)
-- `synthetic-test.R` - Offline synthetic data tests (no API needed, 105 assertions)
+- `synthetic-test.R` - Offline synthetic data tests (no API needed, 102 assertions)
 - `mn26_redcap_api_template.csv` - Template for API credentials CSV file
 - `utils/redcap_utils.R` - REDCap API functions including `get_data_dictionary()`
 - `utils/data_transforms.R` - Data transformation functions (value labeling)
@@ -190,8 +190,7 @@ monitoring_data <- generate_monitoring_report(
 )
 
 # Explore the results
-View(monitoring_data$screener_status)
-View(monitoring_data$eligibility)
+View(monitoring_data$eligibility_form)
 View(monitoring_data$survey_completion)
 View(monitoring_data$child_demographics)
 View(monitoring_data$parent_demographics)
@@ -239,62 +238,38 @@ names(dict_mn)
 
 ## Output Data Frames
 
-The `generate_monitoring_report()` function returns a list with 6 data frames:
+The `generate_monitoring_report()` function returns a list with 5 data frames:
 
-### 1. Screener Status
-Tracks whether eligibility has been determined for each participant.
-
-**Columns:**
-- `pid`: Participant ID
-- `record_id`: REDCap record ID
-- `screener_complete`: TRUE if eligibility is known
-- `screener_status`: "Complete" or "Incomplete"
-
-**Example:**
-```r
-table(monitoring_data$screener_status$screener_status)
-# Complete   Incomplete
-#   2,645         1,263
-```
-
-### 2. Eligibility
-Tracks the 4 eligibility criteria and overall eligibility determination.
+### 1. Eligibility Form
+All raw variables from the "Eligibility Form NORC" REDCap instrument, identified via the data dictionary's `form_name` field. Includes checkbox expansions and the instrument completion flag.
 
 **Columns:**
 - `pid`, `record_id`: Identifiers
-- `parent_age_eligible`: Parent age >= 19
-- `child_age_eligible`: Child age 0-5 years
-- `primary_caregiver_eligible`: Respondent is primary caregiver
-- `state_eligible`: Participant lives in Minnesota
-- `eligible`: Overall eligibility (all 4 criteria must be TRUE)
+- All fields where `form_name == "eligibility_form_norc"` in the data dictionary (e.g., `eq002`, `eq003`, `mn_eqstate`, `age_in_days_n`)
+- `eligibility_form_norc_complete`: REDCap completion status (2 = complete)
 
 **Example:**
 ```r
-# Overall eligibility summary
-table(monitoring_data$eligibility$eligible)
-# FALSE  TRUE
-#  1,263  2,645
-
-# Breakdown by criterion
-colSums(monitoring_data$eligibility[, 3:6], na.rm = TRUE)
+View(monitoring_data$eligibility_form)
 ```
 
-### 3. Survey Completion
-Tracks whether all required survey modules have been completed.
+### 2. Survey Completion
+Tracks module-by-module completion with per-participant denominator.
 
 **Columns:**
 - `pid`, `record_id`: Identifiers
-- `survey_complete`: TRUE if all required modules complete
-- `survey_status`: "Complete" or "Incomplete"
+- `n_required`: Per-participant required module count (7-11)
+- `modules_complete`: Count of completed modules
+- `pct_complete`: Percentage complete
+- `last_module_complete`: Name of last completed instrument in order
 
 **Example:**
 ```r
-table(monitoring_data$survey_completion$survey_status)
-# Complete   Incomplete
-#   1,842         2,066
+# Completion summary
+table(monitoring_data$survey_completion$modules_complete == monitoring_data$survey_completion$n_required)
 ```
 
-### 4. Child Demographics
+### 3. Child Demographics
 Age, sex, and race/ethnicity for each child participant.
 
 **Columns:**
@@ -318,7 +293,7 @@ table(monitoring_data$child_demographics$sex_norc)
 table(monitoring_data$child_demographics$raceG_norc)
 ```
 
-### 5. Parent Demographics
+### 4. Parent Demographics
 Demographics for the primary caregiver (respondent).
 
 **Columns:**
@@ -355,8 +330,6 @@ The script implements the 4 eligibility criteria identified by Kanru:
 2. **Child Age**: Child must be 0-5 years old (calculated from date of birth)
 3. **Primary Caregiver**: Respondent must be a primary caregiver for the child
 4. **State Residence**: Respondent and child must currently live in Minnesota
-
-**Screener Completion**: Determined by whether eligibility is known (not missing). If all 4 criteria have been answered, screener is "Complete".
 
 ## Survey Completion
 

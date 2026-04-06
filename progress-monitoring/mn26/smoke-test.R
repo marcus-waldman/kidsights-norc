@@ -61,17 +61,17 @@ cat("\n=== MONITORING REPORT SMOKE TEST ===\n\n")
 
 monitoring_data <- generate_monitoring_report(csv_path = csv_path)
 
-# Verify all 6 data frames are present
-expected <- c("screener_status", "eligibility", "survey_completion",
+# Verify all 5 data frames are present
+expected <- c("eligibility_form", "survey_completion",
               "child_demographics", "parent_demographics", "compensation_information")
 missing <- setdiff(expected, names(monitoring_data))
 if (length(missing) > 0) {
   stop("Missing data frames: ", paste(missing, collapse = ", "))
 }
-cat("[OK] All 6 data frames present\n")
+cat("[OK] All 5 data frames present\n")
 
 # Verify record counts match
-n_records <- nrow(monitoring_data$screener_status)
+n_records <- nrow(monitoring_data$eligibility_form)
 for (df_name in expected) {
   n <- nrow(monitoring_data[[df_name]])
   if (n != n_records) {
@@ -95,6 +95,13 @@ stopifnot("race_ethnicity" %in% parent_cols)
 stopifnot("education" %in% parent_cols)
 stopifnot("marital_status_label_norc" %in% parent_cols)
 cat("[OK] Parent demographics columns verified\n")
+
+elig_form_cols <- names(monitoring_data$eligibility_form)
+stopifnot("eq002" %in% elig_form_cols)
+stopifnot("eq003" %in% elig_form_cols)
+stopifnot("mn_eqstate" %in% elig_form_cols)
+stopifnot("eligibility_form_norc_complete" %in% elig_form_cols)
+cat("[OK] Eligibility form columns verified\n")
 
 comp_cols <- names(monitoring_data$compensation_information)
 stopifnot("store_choice_label" %in% comp_cols)

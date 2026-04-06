@@ -23,12 +23,12 @@
 #'   monitoring_data <- generate_monitoring_report(csv_path = "C:/path/to/mn26_api.csv")
 #'
 #' Returns:
-#'   List with 6 data frames:
-#'     - screener_status: Screener completion (eligibility known/unknown)
-#'     - eligibility: Eligibility determination (4 criteria)
+#'   List with 5 data frames:
+#'     - eligibility_form: Raw eligibility form variables from REDCap
 #'     - survey_completion: Survey module completion status
 #'     - child_demographics: Child age and sex
 #'     - parent_demographics: Parent age, sex, race/ethnicity, education, marital status
+#'     - compensation_information: Gift card store choice and contact details
 
 # ============================================================================
 # SETUP
@@ -303,9 +303,6 @@ calculate_survey_completion <- function(data) {
   completion_df$n_required <- n_required
   completion_df$modules_complete <- modules_complete
   completion_df$pct_complete <- round(modules_complete / n_required * 100, 1)
-  completion_df$survey_complete <- (modules_complete == n_required)
-  completion_df$survey_status <- ifelse(completion_df$survey_complete, "Complete", "Incomplete")
-
   # --- Last completed module (in instrument order) ---
   ordered <- list(
     list(col = "consent_doc_complete",                    label = "Consent"),
@@ -332,11 +329,12 @@ calculate_survey_completion <- function(data) {
 
   result <- completion_df %>%
     dplyr::select(pid, record_id, n_required, modules_complete, pct_complete,
-                  last_module_complete, survey_complete, survey_status)
+                  last_module_complete)
 
+  n_complete <- sum(result$modules_complete == result$n_required, na.rm = TRUE)
   message("[OK] Survey: ",
-          sum(result$survey_complete, na.rm = TRUE), " complete, ",
-          sum(!result$survey_complete, na.rm = TRUE), " incomplete")
+          n_complete, " complete, ",
+          nrow(result) - n_complete, " incomplete")
 
   return(result)
 }
@@ -389,6 +387,59 @@ extract_parent_demographics <- function(data) {
   return(parent_demo)
 }
 
+#' Extract eligibility form variables
+#'
+#' Returns all raw REDCap fields belonging to the "Eligibility Form NORC"
+#' instrument, identified via the data dictionary's form_name field.
+#'
+#' @param data Raw REDCap data
+#' @param dictionary Named list from get_data_dictionary()
+#' @return Data frame with pid, record_id, and all eligibility form fields
+extract_eligibility_form <- function(data, dictionary) {
+
+  message("Extracting eligibility form variables...")
+
+  # Find fields belonging to the eligibility_form_norc instrument
+  elig_fields <- character(0)
+  for (fld_name in names(dictionary)) {
+    if (identical(dictionary[[fld_name]]$form_name, "eligibility_form_norc")) {
+      elig_fields <- c(elig_fields, fld_name)
+    }
+  }
+
+  if (length(elig_fields) == 0) {
+    warning("No fields found for 'eligibility_form_norc' in data dictionary")
+    return(data %>% dplyr::select(pid, record_id))
+  }
+
+  # Expand checkbox fields: raw data has field___code columns
+  expanded_fields <- character(0)
+  for (fld in elig_fields) {
+    fld_type <- dictionary[[fld]]$field_type
+    if (identical(fld_type, "checkbox")) {
+      # Match columns like fieldname___N
+      checkbox_cols <- grep(paste0("^", fld, "___"), names(data), value = TRUE)
+      expanded_fields <- c(expanded_fields, checkbox_cols)
+    } else {
+      if (fld %in% names(data)) {
+        expanded_fields <- c(expanded_fields, fld)
+      }
+    }
+  }
+
+  # Also include the instrument completion flag
+  complete_col <- "eligibility_form_norc_complete"
+  if (complete_col %in% names(data)) {
+    expanded_fields <- c(expanded_fields, complete_col)
+  }
+
+  avail <- intersect(expanded_fields, names(data))
+  result <- data %>% dplyr::select(pid, record_id, dplyr::any_of(avail))
+
+  message("[OK] Eligibility form: ", length(avail), " fields, ", nrow(result), " records")
+  return(result)
+}
+
 #' Extract compensation information
 #'
 #' @param data Transformed data
@@ -435,26 +486,22 @@ generate_monitoring_report <- function(csv_path,
   # Step 3: Transform raw data into monitoring variables
   transformed_data <- transform_raw_data(raw_data, dictionary)
 
-  # Step 4: Calculate eligibility
-  eligibility <- calculate_eligibility(raw_data)
+  # Step 4: Extract eligibility form variables
+  eligibility_form <- extract_eligibility_form(raw_data, dictionary)
 
-  # Step 5: Calculate screener completion
-  screener_status <- calculate_screener_status(eligibility)
-
-  # Step 6: Calculate survey completion
+  # Step 5: Calculate survey completion
   survey_completion <- calculate_survey_completion(raw_data)
 
-  # Step 7: Extract demographics
+  # Step 6: Extract demographics
   child_demographics <- extract_child_demographics(transformed_data)
   parent_demographics <- extract_parent_demographics(transformed_data)
 
-  # Step 8: Extract compensation information
+  # Step 7: Extract compensation information
   compensation_information <- extract_compensation_information(transformed_data)
 
   # Return organized results
   results <- list(
-    screener_status = screener_status,
-    eligibility = eligibility,
+    eligibility_form = eligibility_form,
     survey_completion = survey_completion,
     child_demographics = child_demographics,
     parent_demographics = parent_demographics,
@@ -463,8 +510,7 @@ generate_monitoring_report <- function(csv_path,
 
   cat("\n=== MONITORING REPORT COMPLETE ===\n")
   cat("Access data frames:\n")
-  cat("  - $screener_status (", nrow(screener_status), " records)\n", sep = "")
-  cat("  - $eligibility (", nrow(eligibility), " records)\n", sep = "")
+  cat("  - $eligibility_form (", nrow(eligibility_form), " records)\n", sep = "")
   cat("  - $survey_completion (", nrow(survey_completion), " records)\n", sep = "")
   cat("  - $child_demographics (", nrow(child_demographics), " records)\n", sep = "")
   cat("  - $parent_demographics (", nrow(parent_demographics), " records)\n", sep = "")
@@ -486,14 +532,11 @@ generate_monitoring_report <- function(csv_path,
 # # 2. Generate monitoring report
 # monitoring_data <- generate_monitoring_report(csv_path = csv_file_path)
 #
-# # View screener completion summary
-# table(monitoring_data$screener_status$screener_status)
-#
-# # View eligibility summary
-# table(monitoring_data$eligibility$eligible)
+# # View eligibility form data
+# head(monitoring_data$eligibility_form)
 #
 # # View survey completion summary
-# table(monitoring_data$survey_completion$survey_status)
+# table(monitoring_data$survey_completion$modules_complete == monitoring_data$survey_completion$n_required)
 #
 # # View child demographics
 # head(monitoring_data$child_demographics)

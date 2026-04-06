@@ -57,9 +57,9 @@ The monitoring system is organized into modular utility functions:
 1. **API Credentials** → Load from CSV file (columns: `project`, `pid`, `api_code`); one row per REDCap project
 2. **REDCap API** → Pull raw data from each project using `REDCapR::redcap_read()`, validate data dictionaries are consistent across projects, then append into a single data frame
 3. **Transform** → Convert raw variables into monitoring-ready derived variables
-4. **Calculate** → Compute eligibility (4 criteria), screener status, survey completion
-5. **Extract** → Pull child and parent demographics
-6. **Return** → List with 6 data frames (screener_status, eligibility, survey_completion, child_demographics, parent_demographics, compensation_information)
+4. **Calculate** → Compute survey completion
+5. **Extract** → Pull eligibility form variables, child and parent demographics
+6. **Return** → List with 5 data frames (eligibility_form, survey_completion, child_demographics, parent_demographics, compensation_information)
 
 ### Eligibility Logic
 
@@ -73,7 +73,7 @@ Screener is "complete" when eligibility is known (non-missing).
 
 ### Survey Completion
 
-Survey is "complete" when all required instruments (1-25) have REDCap status = 2. Uses per-participant denominator (7-11) because child 2 modules and NSCH questions are conditionally required. Instruments 26-29 (old NE25: eligibility form, home learning environment, module 7, birthdate confirmation) are ignored.
+Survey completion is tracked via `n_required`, `modules_complete`, `pct_complete`, and `last_module_complete`. Uses per-participant denominator (7-11) because child 2 modules and NSCH questions are conditionally required. Instruments 26-29 (old NE25: eligibility form, home learning environment, module 7, birthdate confirmation) are ignored.
 
 ## MN26 Variable Mapping (from NE25)
 
@@ -129,14 +129,13 @@ The monitoring script is standalone with no external pipeline dependencies:
 
 ## Output Data Frames
 
-The `generate_monitoring_report()` function returns a list with 6 data frames:
+The `generate_monitoring_report()` function returns a list with 5 data frames:
 
-1. **`$screener_status`** - Eligibility determination status (complete/incomplete)
-2. **`$eligibility`** - Four eligibility criteria + overall eligibility boolean
-3. **`$survey_completion`** - Module completion tracking with percentage and last completed module
-4. **`$child_demographics`** - Age, sex, race/ethnicity for child 1 (and child 2 if present)
-5. **`$parent_demographics`** - Age, gender, race/ethnicity, education, marital status
-6. **`$compensation_information`** - Gift card store choice and contact details
+1. **`$eligibility_form`** - All raw variables from the "Eligibility Form NORC" REDCap instrument
+2. **`$survey_completion`** - Module completion tracking (n_required, modules_complete, pct_complete, last_module_complete)
+3. **`$child_demographics`** - Age, sex, race/ethnicity for child 1 (and child 2 if present)
+4. **`$parent_demographics`** - Age, gender, race/ethnicity, education, marital status
+5. **`$compensation_information`** - Gift card store choice and contact details
 
 ## Contact
 
