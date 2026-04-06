@@ -4,7 +4,7 @@ Scripts for NORC researchers to monitor Minnesota 2026 (MN26) study recruitment 
 
 ## Current Status
 
-**MN26 MIGRATION IN PROGRESS**: Race/ethnicity and compensation transforms have been updated for MN26 NORC field names and value codes. Remaining `[MN26 TODO]` items (eligibility, survey modules, multi-child handling) will be updated as the MN26 data dictionary is finalized.
+**SMOKE TEST PASSING** — The monitoring script runs end-to-end against the NORC MN test REDCap project. Remaining `[MN26 TODO]` items (multi-child eligibility, geography/geocoding) will be updated as needed.
 
 ## Required REDCap API Access
 
@@ -182,7 +182,7 @@ C:/Users/YOUR_USERNAME/my-APIs/mn26_redcap_api.csv
 
 ```r
 # Load the script
-source("scripts/mn26/monitoring_report.R")
+source("progress-monitoring/mn26/monitoring_report.R")
 
 # Generate monitoring report (pass CSV path)
 monitoring_data <- generate_monitoring_report(
@@ -320,6 +320,21 @@ table(monitoring_data$parent_demographics$education)
 
 # Marital status distribution
 table(monitoring_data$parent_demographics$marital_status_label_norc)
+```
+
+### 5. Compensation Information
+Gift card and contact information from Module 9.
+
+**Columns:**
+- `pid`, `record_id`: Identifiers
+- `store_choice_label`: Gift card store ("Lowe's", "Amazon", "Walmart", "Target")
+- `q1394`: First name
+- `q1394a`: Last name
+- `email_incentive`: Email address
+
+**Example:**
+```r
+table(monitoring_data$compensation_information$store_choice_label)
 ```
 
 ## Eligibility Criteria

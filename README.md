@@ -99,12 +99,19 @@ kidsights-norc/
 ├── progress-monitoring/
 │   └── mn26/
 │       ├── monitoring_report.R          # Main monitoring script
+│       ├── synthetic-test.R             # Offline tests (102 assertions)
+│       ├── smoke-test.R                 # Live smoke test (requires API)
 │       ├── mn26_redcap_api_template.csv # API credentials template
 │       ├── README.md                     # Detailed documentation
+│       ├── docs/
+│       │   ├── monitoring_data_dictionary.qmd  # Data dictionary source
+│       │   └── monitoring_data_dictionary.html  # Rendered data dictionary
 │       └── utils/
 │           ├── redcap_utils.R           # REDCap API functions
 │           ├── data_transforms.R        # Data transformation functions
 │           └── safe_joins.R             # Safe join utilities
+├── docs/
+│   └── index.html                        # GitHub Pages data dictionary
 ├── CLAUDE.md                             # Development guide for AI assistants
 └── README.md                             # This file
 ```
