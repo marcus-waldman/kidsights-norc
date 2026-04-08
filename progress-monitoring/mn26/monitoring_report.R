@@ -199,7 +199,8 @@ calculate_survey_completion <- function(data) {
   avail_cols <- intersect(all_cols, names(data))
 
   completion_df <- data %>%
-    dplyr::select(pid, record_id, dplyr::any_of(avail_cols))
+    dplyr::select(pid, record_id, dplyr::any_of("redcap_project_name"),
+                  dplyr::any_of(avail_cols))
 
   n <- nrow(completion_df)
 
@@ -328,7 +329,8 @@ calculate_survey_completion <- function(data) {
   completion_df$last_module_complete <- last_module
 
   result <- completion_df %>%
-    dplyr::select(pid, record_id, n_required, modules_complete, pct_complete,
+    dplyr::select(pid, record_id, dplyr::any_of("redcap_project_name"),
+                  n_required, modules_complete, pct_complete,
                   last_module_complete)
 
   n_complete <- sum(result$modules_complete == result$n_required, na.rm = TRUE)
@@ -354,7 +356,7 @@ extract_child_demographics <- function(data) {
   message("Extracting child demographics...")
 
   child_demo <- data %>%
-    dplyr::select(pid, record_id,
+    dplyr::select(pid, record_id, dplyr::any_of("redcap_project_name"),
                   age_years = years_old,
                   sex_norc,
                   race_norc, hisp, raceG_norc,
@@ -376,7 +378,7 @@ extract_parent_demographics <- function(data) {
   message("Extracting parent demographics...")
 
   parent_demo <- data %>%
-    dplyr::select(pid, record_id,
+    dplyr::select(pid, record_id, dplyr::any_of("redcap_project_name"),
                   age_years = a1_years_old,
                   gender = a1_gender_norc,
                   race_ethnicity = a1_raceG_norc,
@@ -409,7 +411,7 @@ extract_eligibility_form <- function(data, dictionary) {
 
   if (length(elig_fields) == 0) {
     warning("No fields found for 'eligibility_form_norc' in data dictionary")
-    return(data %>% dplyr::select(pid, record_id))
+    return(data %>% dplyr::select(pid, record_id, dplyr::any_of("redcap_project_name")))
   }
 
   # Expand checkbox fields: raw data has field___code columns
@@ -434,7 +436,8 @@ extract_eligibility_form <- function(data, dictionary) {
   }
 
   avail <- intersect(expanded_fields, names(data))
-  result <- data %>% dplyr::select(pid, record_id, dplyr::any_of(avail))
+  result <- data %>% dplyr::select(pid, record_id, dplyr::any_of("redcap_project_name"),
+                                   dplyr::any_of(avail))
 
   message("[OK] Eligibility form: ", length(avail), " fields, ", nrow(result), " records")
   return(result)
@@ -449,7 +452,7 @@ extract_compensation_information <- function(data) {
   message("Extracting compensation information...")
 
   comp <- data %>%
-    dplyr::select(pid, record_id,
+    dplyr::select(pid, record_id, dplyr::any_of("redcap_project_name"),
                   dplyr::any_of(c("store_choice_label",
                                   "q1394", "q1394a", "email_incentive")))
 
@@ -468,7 +471,10 @@ extract_compensation_information <- function(data) {
 #'
 #' @param csv_path Path to API credentials CSV file (columns: project, pid, api_code)
 #' @param redcap_url REDCap API URL (defaults to UNMC REDCap instance)
-#' @return List with 6 data frames
+#' @return List with 5 data frames (eligibility_form, survey_completion,
+#'   child_demographics, parent_demographics, compensation_information). Every
+#'   returned frame includes a `redcap_project_name` column identifying which
+#'   REDCap project each row was pulled from.
 #' @export
 generate_monitoring_report <- function(csv_path,
                                       redcap_url = "https://unmcredcap.unmc.edu/redcap/api/") {

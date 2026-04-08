@@ -74,7 +74,7 @@ build_synthetic_raw <- function(n = 1, overrides = list()) {
     # --- Identifiers ---
     pid = seq_len(n),
     record_id = seq_len(n),
-    source_project = rep("synthetic_test", n),
+    redcap_project_name = rep("synthetic_test", n),
 
     # --- Eligibility ---
     eq003 = rep(1, n),
@@ -475,17 +475,13 @@ assert_true(is.data.frame(transformed), "transform returns data.frame")
 assert_equal(nrow(transformed), 1L, "transform row count")
 
 # Step 2: Eligibility form extraction (uses mock dictionary)
+# Production REDCap dictionary: only the calc/text/birth-date fields belong to
+# form_name = "eligibility_form_norc". The eq*/mn_eqstate fields are in the
+# legacy `eligibility_form` instrument and are NOT extracted into this output.
 mock_dict <- list(
-  eq001 = list(field_name = "eq001", form_name = "eligibility_form_norc", field_type = "yesno"),
-  eq002 = list(field_name = "eq002", form_name = "eligibility_form_norc", field_type = "yesno"),
-  eq003 = list(field_name = "eq003", form_name = "eligibility_form_norc", field_type = "yesno"),
-  mn_eqstate = list(field_name = "mn_eqstate", form_name = "eligibility_form_norc", field_type = "yesno"),
   age_in_days_n = list(field_name = "age_in_days_n", form_name = "eligibility_form_norc", field_type = "calc")
 )
 elig_form <- extract_eligibility_form(integration_df, mock_dict)
-assert_true("eq002" %in% names(elig_form), "integration: elig_form has eq002")
-assert_true("eq003" %in% names(elig_form), "integration: elig_form has eq003")
-assert_true("mn_eqstate" %in% names(elig_form), "integration: elig_form has mn_eqstate")
 assert_true("age_in_days_n" %in% names(elig_form), "integration: elig_form has age_in_days_n")
 assert_true("eligibility_form_norc_complete" %in% names(elig_form), "integration: elig_form has completion flag")
 assert_equal(nrow(elig_form), 1L, "integration: elig_form 1 row")
@@ -518,7 +514,83 @@ assert_equal(nrow(child_demo), 1L, "integration: child_demo 1 row")
 assert_equal(nrow(parent_demo), 1L, "integration: parent_demo 1 row")
 assert_equal(nrow(comp_info), 1L, "integration: comp_info 1 row")
 
+# Verify redcap_project_name is preserved through every output frame
+assert_true("redcap_project_name" %in% names(elig_form),    "integration: elig_form has redcap_project_name")
+assert_true("redcap_project_name" %in% names(survey),       "integration: survey has redcap_project_name")
+assert_true("redcap_project_name" %in% names(child_demo),   "integration: child_demo has redcap_project_name")
+assert_true("redcap_project_name" %in% names(parent_demo),  "integration: parent_demo has redcap_project_name")
+assert_true("redcap_project_name" %in% names(comp_info),    "integration: comp_info has redcap_project_name")
+
 cat("[OK] Full integration tests passed\n")
+
+# ============================================================================
+# TEST SECTION 11: MULTI-PROJECT COMBINATION
+# ============================================================================
+# Mimics what pull_redcap_data() does when 4 REDCap projects are combined:
+# each project's raw frame is tagged with redcap_project_name and the frames
+# are bind_rows()'d before transformation. Verifies the column survives all
+# the way through to all 5 output data frames with correct per-project counts.
+cat("\n=== 10. MULTI-PROJECT COMBINATION ===\n")
+
+mp_project_names <- c("project_A", "project_B", "project_C", "project_D")
+mp_n_per <- 3L
+
+mp_frames <- lapply(seq_along(mp_project_names), function(i) {
+  build_synthetic_raw(n = mp_n_per, overrides = list(
+    redcap_project_name = mp_project_names[i],
+    pid                 = i,                       # one PID per project
+    record_id           = (i - 1L) * mp_n_per + seq_len(mp_n_per)
+  ))
+})
+mp_combined <- dplyr::bind_rows(mp_frames)
+
+assert_equal(nrow(mp_combined), 12L, "multi-proj: combined nrow == 4 projects * 3 rows")
+assert_true("redcap_project_name" %in% names(mp_combined),
+            "multi-proj: combined has redcap_project_name")
+assert_equal(length(unique(mp_combined$redcap_project_name)), 4L,
+             "multi-proj: combined has 4 distinct projects")
+
+# Run the full pipeline on the combined frame
+mp_transformed <- transform_raw_data(mp_combined, dictionary = NULL)
+assert_equal(nrow(mp_transformed), 12L, "multi-proj: transform preserves row count")
+assert_true("redcap_project_name" %in% names(mp_transformed),
+            "multi-proj: transform preserves redcap_project_name")
+
+# Reuse the same mock_dict from Section 9
+mp_elig_form    <- extract_eligibility_form(mp_combined, mock_dict)
+mp_survey       <- calculate_survey_completion(mp_combined)
+mp_child_demo   <- extract_child_demographics(mp_transformed)
+mp_parent_demo  <- extract_parent_demographics(mp_transformed)
+mp_comp_info    <- extract_compensation_information(mp_transformed)
+
+mp_outputs <- list(
+  elig_form    = mp_elig_form,
+  survey       = mp_survey,
+  child_demo   = mp_child_demo,
+  parent_demo  = mp_parent_demo,
+  comp_info    = mp_comp_info
+)
+
+# Each output frame: row count, column presence, distinct project count, names match
+for (out_name in names(mp_outputs)) {
+  out <- mp_outputs[[out_name]]
+  assert_equal(nrow(out), 12L,
+               paste0("multi-proj: ", out_name, " nrow == 12"))
+  assert_true("redcap_project_name" %in% names(out),
+              paste0("multi-proj: ", out_name, " has redcap_project_name"))
+  assert_equal(length(unique(out$redcap_project_name)), 4L,
+               paste0("multi-proj: ", out_name, " has 4 distinct projects"))
+  assert_true(all(mp_project_names %in% out$redcap_project_name),
+              paste0("multi-proj: ", out_name, " contains all 4 project names"))
+}
+
+# Per-project record counts in child_demographics
+for (proj in mp_project_names) {
+  assert_equal(sum(mp_child_demo$redcap_project_name == proj), mp_n_per,
+               paste0("multi-proj: child_demo has ", mp_n_per, " rows for ", proj))
+}
+
+cat("[OK] Multi-project combination tests passed\n")
 
 # ============================================================================
 # SUMMARY

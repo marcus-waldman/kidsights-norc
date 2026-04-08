@@ -16,9 +16,9 @@ The main monitoring script is standalone and requires only R with necessary pack
 # In R console
 source("progress-monitoring/mn26/monitoring_report.R")
 
-# Generate monitoring report
+# Generate monitoring report (production = 4-project credentials file)
 monitoring_data <- generate_monitoring_report(
-  csv_path = "C:/path/to/your/mn26_redcap_api.csv"
+  csv_path = "C:/my_auths/kidsights_redcap_norc_MN_2026.csv"
 )
 ```
 
@@ -49,27 +49,29 @@ The monitoring system is organized into modular utility functions:
 - **`progress-monitoring/mn26/utils/redcap_utils.R`** - REDCap API credential loading and data extraction
 - **`progress-monitoring/mn26/utils/data_transforms.R`** - Raw REDCap data transformations (age, sex, race/ethnicity, education, marital status)
 - **`progress-monitoring/mn26/utils/safe_joins.R`** - Safe left join with collision detection and cardinality validation
-- **`progress-monitoring/mn26/synthetic-test.R`** - Offline synthetic data tests (105 assertions, no API needed)
+- **`progress-monitoring/mn26/synthetic-test.R`** - Offline synthetic data tests (133 assertions, including a multi-project bind_rows test section, no API needed)
 - **`progress-monitoring/mn26/smoke-test.R`** - Live smoke test against REDCap API
 
 ### Data Flow
 
-1. **API Credentials** → Load from CSV file (columns: `project`, `pid`, `api_code`); one row per REDCap project
-2. **REDCap API** → Pull raw data from each project using `REDCapR::redcap_read()`, validate data dictionaries are consistent across projects, then append into a single data frame
+1. **API Credentials** → Load from CSV file (columns: `project`, `pid`, `api_code`); one row per REDCap project (MN26 production = 4 projects)
+2. **REDCap API** → Pull raw data from each project using `REDCapR::redcap_read()`, tag each row with `redcap_project_name`, validate data dictionaries are consistent across projects, then `bind_rows()` into a single data frame
 3. **Transform** → Convert raw variables into monitoring-ready derived variables
 4. **Calculate** → Compute survey completion
-5. **Extract** → Pull eligibility form variables, child and parent demographics
-6. **Return** → List with 5 data frames (eligibility_form, survey_completion, child_demographics, parent_demographics, compensation_information)
+5. **Extract** → Pull eligibility form variables, child and parent demographics; `redcap_project_name` is preserved through every extractor
+6. **Return** → List with 5 data frames (eligibility_form, survey_completion, child_demographics, parent_demographics, compensation_information); every frame includes `redcap_project_name` for per-project traceability
 
 ### Eligibility Logic
 
-The script implements 4 eligibility criteria:
+The `calculate_eligibility()` function implements 4 eligibility criteria:
 1. Parent age ≥19 (`eq003 == 1`)
 2. Child age 0-5 years (`age_in_days_n ≤ 1825`)
 3. Primary caregiver status (`eq002 == 1`)
 4. Minnesota residence (`mn_eqstate == 1`)
 
 Screener is "complete" when eligibility is known (non-missing).
+
+> **Note (production reality):** `eq002`/`eq003`/`mn_eqstate` live in the *legacy* `eligibility_form` REDCap instrument in the 4 production projects, while `age_in_days_n` lives in `eligibility_form_norc`. All four columns are still present in `raw_data` (regardless of form_name) so the function works as written. However, `calculate_eligibility()` is currently **not called by `generate_monitoring_report()`** — it's a standalone utility, not part of the production output.
 
 ### Survey Completion
 
@@ -129,9 +131,9 @@ The monitoring script is standalone with no external pipeline dependencies:
 
 ## Output Data Frames
 
-The `generate_monitoring_report()` function returns a list with 5 data frames:
+The `generate_monitoring_report()` function returns a list with 5 data frames. Every frame includes `pid`, `record_id`, and **`redcap_project_name`** (added during the multi-project pull) so each row can be traced back to its source REDCap project.
 
-1. **`$eligibility_form`** - All raw variables from the "Eligibility Form NORC" REDCap instrument
+1. **`$eligibility_form`** - All raw variables from the "Eligibility Form NORC" REDCap instrument (form_name `eligibility_form_norc`). Note: `eq002`/`eq003`/`mn_eqstate` are NOT in this frame — those legacy fields live in the old `eligibility_form` instrument and are intentionally excluded. They remain in raw_data for `calculate_eligibility()`.
 2. **`$survey_completion`** - Module completion tracking (n_required, modules_complete, pct_complete, last_module_complete)
 3. **`$child_demographics`** - Age, sex, race/ethnicity for child 1 (and child 2 if present)
 4. **`$parent_demographics`** - Age, gender, race/ethnicity, education, marital status

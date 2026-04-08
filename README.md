@@ -12,20 +12,21 @@ This repository provides standalone R scripts that connect to REDCap via API to 
 
 ## Current Status
 
-✅ **SMOKE TEST PASSING** — The monitoring script runs end-to-end against the NORC MN test REDCap project (2,654 records, 976 columns).
+✅ **SMOKE TEST PASSING** — The monitoring script runs end-to-end against the **4 production REDCap projects** (Kidsights Survey NORC 1–4), combining **10,200 records** into a single set of monitoring data frames.
 
 ### Smoke Test Results
 
 | Component | Result |
 |---|---|
-| REDCap API connection | ✅ 2,654 records retrieved |
-| Data dictionary | ✅ 865 fields (648 after @HIDDEN filtering) |
+| REDCap API connection | ✅ 10,200 records across 4 projects (NORC 1/2/3 = 2,500 each, NORC 4 = 2,700) |
+| Cross-project dictionary validation | ✅ 865 fields, identical across all 4 projects |
 | Data transforms | ✅ All demographic derivations succeed |
-| Eligibility form | ✅ Raw variables extracted from data dictionary |
-| Survey completion | ✅ 7 complete, per-participant denominator (7-11) |
-| Child demographics | ✅ 2,654 records (child 1 + child 2 columns) |
-| Parent demographics | ✅ 2,654 records |
-| Compensation info | ✅ 2,654 records |
+| Eligibility form | ✅ 15 raw variables extracted from `eligibility_form_norc` instrument |
+| Survey completion | ✅ Per-participant denominator (7–11) |
+| Child demographics | ✅ 10,200 records (child 1 + child 2 columns) |
+| Parent demographics | ✅ 10,200 records |
+| Compensation info | ✅ 10,200 records |
+| `redcap_project_name` tag | ✅ Present on all 5 output frames for per-project traceability |
 
 ### MN26 Migration Status
 
@@ -56,23 +57,25 @@ install.packages(c("dplyr", "tidyr", "REDCapR", "httr"))
 
 ### 2. Create API Credentials File
 
-Create a CSV file with your REDCap API credentials (use `progress-monitoring/mn26/mn26_redcap_api_template.csv` as template). Include one row per REDCap project:
+Create a CSV file with your REDCap API credentials (use `progress-monitoring/mn26/mn26_redcap_api_template.csv` as template). Include **one row per REDCap project** — the MN26 production setup uses 4 projects:
 
 ```csv
 project,pid,api_code
-mn26_project_1,8609,YOUR_API_TOKEN_HERE
-mn26_project_2,8729,YOUR_API_TOKEN_HERE
+Kidsights Survey NORC 1,8609,YOUR_API_TOKEN_HERE
+Kidsights Survey NORC 2,8729,YOUR_API_TOKEN_HERE
+Kidsights Survey NORC 3,8841,YOUR_API_TOKEN_HERE
+Kidsights Survey NORC 4,8952,YOUR_API_TOKEN_HERE
 ```
 
 | Column | Description |
 |--------|-------------|
-| `project` | Descriptive name for the REDCap project |
+| `project` | Descriptive name for the REDCap project (also flows into the output as `redcap_project_name`) |
 | `pid` | REDCap project ID |
 | `api_code` | REDCap API token for that project |
 
-All projects must share the same data dictionary (field names, types, and choices). The pipeline validates this automatically and errors if any project's dictionary is inconsistent.
+All projects must share the same data dictionary (field names, types, and choices). The pipeline validates this automatically and errors if any project's dictionary is inconsistent. The pipeline iterates over all rows in the CSV — adding or removing projects requires no code changes.
 
-**Security Note**: Store this file outside the repository (e.g., `C:/Users/YOUR_USERNAME/my-APIs/`) and **never commit it to git**.
+**Security Note**: Store this file outside the repository (e.g., `C:/Users/YOUR_USERNAME/my-APIs/` or `C:/my_auths/`) and **never commit it to git**.
 
 ### 3. Run the Monitoring Report
 
@@ -82,7 +85,7 @@ source("progress-monitoring/mn26/monitoring_report.R")
 
 # Generate monitoring report
 monitoring_data <- generate_monitoring_report(
-  csv_path = "C:/Users/YOUR_USERNAME/my-APIs/mn26_redcap_api.csv"
+  csv_path = "C:/my_auths/kidsights_redcap_norc_MN_2026.csv"
 )
 
 # View results
@@ -90,6 +93,9 @@ View(monitoring_data$eligibility_form)
 table(monitoring_data$survey_completion$modules_complete == monitoring_data$survey_completion$n_required)
 View(monitoring_data$child_demographics)
 View(monitoring_data$parent_demographics)
+
+# Per-project record counts (any of the 5 frames will work)
+table(monitoring_data$child_demographics$redcap_project_name)
 ```
 
 ## Repository Structure
@@ -99,8 +105,8 @@ kidsights-norc/
 ├── progress-monitoring/
 │   └── mn26/
 │       ├── monitoring_report.R          # Main monitoring script
-│       ├── synthetic-test.R             # Offline tests (102 assertions)
-│       ├── smoke-test.R                 # Live smoke test (requires API)
+│       ├── synthetic-test.R             # Offline tests (133 assertions, multi-project coverage)
+│       ├── smoke-test.R                 # Live smoke test (requires API; 4 production projects)
 │       ├── mn26_redcap_api_template.csv # API credentials template
 │       ├── README.md                     # Detailed documentation
 │       ├── docs/
@@ -132,9 +138,9 @@ kidsights-norc/
 
 ### Comprehensive Monitoring Output
 
-The script returns 5 data frames:
+The script returns 5 data frames. Every frame includes `pid`, `record_id`, and **`redcap_project_name`** (the source project tag) so each row can be traced back to one of the 4 production REDCap projects.
 
-1. **Eligibility Form** - All raw variables from the Eligibility Form NORC instrument
+1. **Eligibility Form** - Raw variables from the `eligibility_form_norc` instrument (15 fields + completion flag). Note: legacy `eq002`/`eq003`/`mn_eqstate` live in the old `eligibility_form` instrument and are *not* in this output.
 2. **Survey Completion** - Module-by-module completion tracking
 3. **Child Demographics** - Age and sex distribution
 4. **Parent Demographics** - Age, sex, race/ethnicity, education, marital status
@@ -144,11 +150,12 @@ The script returns 5 data frames:
 
 The monitoring script requires access to raw REDCap variables through the API:
 
-- **Identifiers**: `pid`, `record_id`
-- **Eligibility screening**: `eq001`, `eq002`, `eq003`, `mn_eqstate`, `age_in_days_n`
-- **Survey completion**: `module_2_complete` through `module_9_complete`
+- **Identifiers**: `pid`, `record_id` (the source project name is added automatically as `redcap_project_name`)
+- **Eligibility screening**: `eq001`, `eq002`, `eq003`, `mn_eqstate`, `age_in_days_n` *(eq*/mn_eqstate live in the legacy `eligibility_form` instrument and are pulled into raw_data but are not exposed in `$eligibility_form`)*
+- **Eligibility form (NORC)**: `consent_date_n`, `age_under_6_n`, `kids_u6_n`, `dob_n`, `parent_guardian_c1_n`, etc. — all fields whose `form_name == "eligibility_form_norc"`
+- **Survey completion**: `consent_doc_complete`, `eligibility_form_norc_complete`, `module_2_family_information_complete`, `module_3_child_information_complete`, `module_6_*_complete` (8 age bands × 2 children), `nsch_questions_complete`, `child_information_2_954c_complete`, `module_8_followup_information_complete`, `module_9_compensation_information_complete`
 - **Child 1 demographics**: `age_in_days_n`, `cqr009`, `cqr010b___*` (race checkboxes), `cqr011`
-- **Child 2 demographics**: `age_in_days_c2_n`, `cqr009_c2`, `cqr010_c2b___*` (race checkboxes), `cqr011_c2`
+- **Child 2 demographics**: `age_in_days_c2_n`, `cqr009_c2`, `cqr010_c2b___*` (race checkboxes), `cqr011_c2`, `dob_c2_n`
 - **Parent demographics**: `mn2` (gender), `cqr003`, `cqr004`, `sq002b___*` (race checkboxes), `sq003`, `cqfa001`
 - **Compensation**: `store_choice`, `q1394`, `q1394a`, `email_incentive`
 

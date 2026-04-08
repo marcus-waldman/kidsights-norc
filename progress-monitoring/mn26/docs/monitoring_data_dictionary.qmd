@@ -18,13 +18,15 @@ Data dictionary for the 5 data frames returned by `generate_monitoring_report()`
 
 Each row in every data frame represents one participant, uniquely identified by the combination of `pid` + `record_id`. Neither `pid` nor `record_id` is unique on its own — `pid` identifies the REDCap project and `record_id` is unique only within a project.
 
+The MN26 production setup combines **4 REDCap projects** (Kidsights Survey NORC 1–4). Every output data frame includes a `redcap_project_name` column tagging each row with the source REDCap project, so per-project counts and filters are available without re-pulling.
+
 ::: {.callout-note}
 Variables with a `_norc` suffix use MN26 NORC value codes that differ from the NE25 pipeline.
 :::
 
 ## `$eligibility_form`
 
-All raw variables from the "Eligibility Form NORC" REDCap instrument, identified via the data dictionary's `form_name` field.
+All raw variables from the "Eligibility Form NORC" REDCap instrument, identified via the data dictionary's `form_name` field. In the 4 production REDCap projects this resolves to **15 fields + 1 completion flag** per row.
 
 ### Columns
 
@@ -32,6 +34,7 @@ All raw variables from the "Eligibility Form NORC" REDCap instrument, identified
 |--------|----------------|------|-------------|--------|
 | `pid` | `pid` (from credentials CSV) | integer | REDCap project ID | Project-specific integer |
 | `record_id` | `record_id` | numeric | REDCap record ID | Unique within project |
+| `redcap_project_name` | `project` (from credentials CSV) | character | Source REDCap project name | e.g., `"Kidsights Survey NORC 1"` |
 | *(dynamic)* | All fields where `form_name == "eligibility_form_norc"` | varies | Raw REDCap fields from the eligibility instrument | As stored in REDCap |
 | `eligibility_form_norc_complete` | REDCap instrument status | numeric | Instrument completion flag | 0 = Incomplete, 2 = Complete |
 
@@ -41,15 +44,27 @@ All raw variables from the "Eligibility Form NORC" REDCap instrument, identified
 
 Fields are selected dynamically from the data dictionary at runtime. Checkbox fields (e.g., race) are expanded to their `field___code` columns. The exact columns depend on the REDCap project configuration.
 
-### Known Fields
+### Known Fields (production projects)
 
-Common fields in this instrument include:
+The following fields belong to `form_name == "eligibility_form_norc"` in the 4 production projects and appear in this output:
 
-- `eq002` — Primary caregiver status (yesno)
-- `eq003` — Parent age ≥ 19 (yesno)
-- `mn_eqstate` — Minnesota residence (yesno)
+- `consent_date_n` — Consent date
+- `age_under_6_n` — Any child under 6 in household (yesno)
+- `kids_u6_n` — Number of children under 6
+- `mn_birth_c1_n` / `mn_birth_c2_n` / `mn_birth_c3_n` — Minnesota birth indicators
+- `dob_n` — Child 1 date of birth
 - `age_in_days_n` — Child 1 age in days (calculated)
+- `parent_guardian_c1_n` — Parent/guardian name for child 1
+- `initials_c1_n` — Child 1 initials
+- `dob_c2_n` — Child 2 date of birth
 - `age_in_days_c2_n` — Child 2 age in days (calculated, if applicable)
+- `parent_guardian_c2_n` — Parent/guardian name for child 2
+- `initials_c2_n` — Child 2 initials
+- `confirm_text` — Confirmation text
+
+::: {.callout-important}
+The legacy NE25-era eligibility-checking fields (`eq002`, `eq003`, `mn_eqstate`) live in the *old* `eligibility_form` instrument and are **not** in this output. They remain in the raw REDCap pull for downstream eligibility logic but are intentionally excluded from `$eligibility_form`.
+:::
 
 {{< pagebreak >}}
 
@@ -63,6 +78,7 @@ Module-by-module completion tracking with per-participant denominator.
 |--------|----------------|------|-------------|--------|
 | `pid` | `pid` | integer | REDCap project ID | Project-specific integer |
 | `record_id` | `record_id` | numeric | REDCap record ID | Unique within project |
+| `redcap_project_name` | `project` (from credentials CSV) | character | Source REDCap project name | e.g., `"Kidsights Survey NORC 1"` |
 | `n_required` | Derived | integer | Per-participant required module count | 7--11 |
 | `modules_complete` | Derived | integer | Count of completed modules | 0 to `n_required` |
 | `pct_complete` | Derived | numeric | Percentage of modules complete | 0 to 100 |
@@ -113,6 +129,7 @@ Age, sex, and race/ethnicity for child 1 and child 2.
 |--------|----------------|------|-------------|--------|
 | `pid` | `pid` | integer | REDCap project ID | Project-specific integer |
 | `record_id` | `record_id` | numeric | REDCap record ID | Unique within project |
+| `redcap_project_name` | `project` (from credentials CSV) | character | Source REDCap project name | e.g., `"Kidsights Survey NORC 1"` |
 | `age_years` | `age_in_days_n` | numeric | Child 1 age in years | 0--5 (continuous) |
 | `sex_norc` | `cqr009` | character | Child 1 sex | `"Female"`, `"Male"` |
 | `race_norc` | `cqr010b___*` | character | Child 1 race | See mapping below |
@@ -203,6 +220,7 @@ Demographics for the primary caregiver (respondent).
 |--------|----------------|------|-------------|--------|
 | `pid` | `pid` | integer | REDCap project ID | Project-specific integer |
 | `record_id` | `record_id` | numeric | REDCap record ID | Unique within project |
+| `redcap_project_name` | `project` (from credentials CSV) | character | Source REDCap project name | e.g., `"Kidsights Survey NORC 1"` |
 | `age_years` | `cqr003` | numeric | Parent age in years | Continuous |
 | `gender` | `mn2` | character | Parent gender | `"Female"`, `"Male"`, `"Non-binary"` |
 | `race_ethnicity` | `sq002b___*` + `sq003` | character | Combined race/ethnicity | See mapping below |
@@ -320,6 +338,7 @@ Gift card and contact information from Module 9.
 |--------|----------------|------|-------------|--------|
 | `pid` | `pid` | integer | REDCap project ID | Project-specific integer |
 | `record_id` | `record_id` | numeric | REDCap record ID | Unique within project |
+| `redcap_project_name` | `project` (from credentials CSV) | character | Source REDCap project name | e.g., `"Kidsights Survey NORC 1"` |
 | `store_choice_label` | `store_choice` | character | Gift card store choice | See mapping below |
 | `q1394` | `q1394` | character | Participant first name | Free text |
 | `q1394a` | `q1394a` | character | Participant last name | Free text |

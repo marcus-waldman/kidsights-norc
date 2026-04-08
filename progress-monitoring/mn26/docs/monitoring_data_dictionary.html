@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-04-06">
+<meta name="dcterms.date" content="2026-04-08">
 
 <title>MN26 Monitoring Data Dictionary</title>
 <style>
@@ -2287,7 +2287,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#columns" id="toc-columns" class="nav-link" data-scroll-target="#columns"><span class="header-section-number">1.1</span> Columns</a></li>
   <li><a href="#derivation" id="toc-derivation" class="nav-link" data-scroll-target="#derivation"><span class="header-section-number">1.2</span> Derivation</a></li>
-  <li><a href="#known-fields" id="toc-known-fields" class="nav-link" data-scroll-target="#known-fields"><span class="header-section-number">1.3</span> Known Fields</a></li>
+  <li><a href="#known-fields-production-projects" id="toc-known-fields-production-projects" class="nav-link" data-scroll-target="#known-fields-production-projects"><span class="header-section-number">1.3</span> Known Fields (production projects)</a></li>
   </ul></li>
   <li><a href="#survey_completion" id="toc-survey_completion" class="nav-link" data-scroll-target="#survey_completion"><span class="header-section-number">2</span> <code>$survey_completion</code></a>
   <ul class="collapse">
@@ -2331,7 +2331,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">April 6, 2026</p>
+      <p class="date">April 8, 2026</p>
     </div>
   </div>
   
@@ -2345,6 +2345,7 @@ window.Quarto = {
 
 <p>Data dictionary for the 5 data frames returned by <code>generate_monitoring_report()</code>.</p>
 <p>Each row in every data frame represents one participant, uniquely identified by the combination of <code>pid</code> + <code>record_id</code>. Neither <code>pid</code> nor <code>record_id</code> is unique on its own — <code>pid</code> identifies the REDCap project and <code>record_id</code> is unique only within a project.</p>
+<p>The MN26 production setup combines <strong>4 REDCap projects</strong> (Kidsights Survey NORC 1–4). Every output data frame includes a <code>redcap_project_name</code> column tagging each row with the source REDCap project, so per-project counts and filters are available without re-pulling.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -2360,7 +2361,7 @@ Note
 </div>
 <section id="eligibility_form" class="level2" data-number="1">
 <h2 data-number="1" class="anchored" data-anchor-id="eligibility_form"><span class="header-section-number">1</span> <code>$eligibility_form</code></h2>
-<p>All raw variables from the “Eligibility Form NORC” REDCap instrument, identified via the data dictionary’s <code>form_name</code> field.</p>
+<p>All raw variables from the “Eligibility Form NORC” REDCap instrument, identified via the data dictionary’s <code>form_name</code> field. In the 4 production REDCap projects this resolves to <strong>15 fields + 1 completion flag</strong> per row.</p>
 <section id="columns" class="level3" data-number="1.1">
 <h3 data-number="1.1" class="anchored" data-anchor-id="columns"><span class="header-section-number">1.1</span> Columns</h3>
 <table class="table-striped table-hover caption-top table">
@@ -2396,13 +2397,20 @@ Note
 <td>Unique within project</td>
 </tr>
 <tr class="odd">
+<td><code>redcap_project_name</code></td>
+<td><code>project</code> (from credentials CSV)</td>
+<td>character</td>
+<td>Source REDCap project name</td>
+<td>e.g., <code>&quot;Kidsights Survey NORC 1&quot;</code></td>
+</tr>
+<tr class="even">
 <td><em>(dynamic)</em></td>
 <td>All fields where <code>form_name == &quot;eligibility_form_norc&quot;</code></td>
 <td>varies</td>
 <td>Raw REDCap fields from the eligibility instrument</td>
 <td>As stored in REDCap</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>eligibility_form_norc_complete</code></td>
 <td>REDCap instrument status</td>
 <td>numeric</td>
@@ -2416,16 +2424,37 @@ Note
 <h3 data-number="1.2" class="anchored" data-anchor-id="derivation"><span class="header-section-number">1.2</span> Derivation</h3>
 <p>Fields are selected dynamically from the data dictionary at runtime. Checkbox fields (e.g., race) are expanded to their <code>field___code</code> columns. The exact columns depend on the REDCap project configuration.</p>
 </section>
-<section id="known-fields" class="level3" data-number="1.3">
-<h3 data-number="1.3" class="anchored" data-anchor-id="known-fields"><span class="header-section-number">1.3</span> Known Fields</h3>
-<p>Common fields in this instrument include:</p>
+<section id="known-fields-production-projects" class="level3" data-number="1.3">
+<h3 data-number="1.3" class="anchored" data-anchor-id="known-fields-production-projects"><span class="header-section-number">1.3</span> Known Fields (production projects)</h3>
+<p>The following fields belong to <code>form_name == &quot;eligibility_form_norc&quot;</code> in the 4 production projects and appear in this output:</p>
 <ul>
-<li><code>eq002</code> — Primary caregiver status (yesno)</li>
-<li><code>eq003</code> — Parent age ≥ 19 (yesno)</li>
-<li><code>mn_eqstate</code> — Minnesota residence (yesno)</li>
+<li><code>consent_date_n</code> — Consent date</li>
+<li><code>age_under_6_n</code> — Any child under 6 in household (yesno)</li>
+<li><code>kids_u6_n</code> — Number of children under 6</li>
+<li><code>mn_birth_c1_n</code> / <code>mn_birth_c2_n</code> / <code>mn_birth_c3_n</code> — Minnesota birth indicators</li>
+<li><code>dob_n</code> — Child 1 date of birth</li>
 <li><code>age_in_days_n</code> — Child 1 age in days (calculated)</li>
+<li><code>parent_guardian_c1_n</code> — Parent/guardian name for child 1</li>
+<li><code>initials_c1_n</code> — Child 1 initials</li>
+<li><code>dob_c2_n</code> — Child 2 date of birth</li>
 <li><code>age_in_days_c2_n</code> — Child 2 age in days (calculated, if applicable)</li>
+<li><code>parent_guardian_c2_n</code> — Parent/guardian name for child 2</li>
+<li><code>initials_c2_n</code> — Child 2 initials</li>
+<li><code>confirm_text</code> — Confirmation text</li>
 </ul>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Important
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The legacy NE25-era eligibility-checking fields (<code>eq002</code>, <code>eq003</code>, <code>mn_eqstate</code>) live in the <em>old</em> <code>eligibility_form</code> instrument and are <strong>not</strong> in this output. They remain in the raw REDCap pull for downstream eligibility logic but are intentionally excluded from <code>$eligibility_form</code>.</p>
+</div>
+</div>
 <div style="page-break-after: always;"></div>
 </section>
 </section>
@@ -2467,27 +2496,34 @@ Note
 <td>Unique within project</td>
 </tr>
 <tr class="odd">
+<td><code>redcap_project_name</code></td>
+<td><code>project</code> (from credentials CSV)</td>
+<td>character</td>
+<td>Source REDCap project name</td>
+<td>e.g., <code>&quot;Kidsights Survey NORC 1&quot;</code></td>
+</tr>
+<tr class="even">
 <td><code>n_required</code></td>
 <td>Derived</td>
 <td>integer</td>
 <td>Per-participant required module count</td>
 <td>7–11</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>modules_complete</code></td>
 <td>Derived</td>
 <td>integer</td>
 <td>Count of completed modules</td>
 <td>0 to <code>n_required</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>pct_complete</code></td>
 <td>Derived</td>
 <td>numeric</td>
 <td>Percentage of modules complete</td>
 <td>0 to 100</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>last_module_complete</code></td>
 <td>Derived</td>
 <td>character</td>
@@ -2640,69 +2676,76 @@ Note
 <td>Unique within project</td>
 </tr>
 <tr class="odd">
+<td><code>redcap_project_name</code></td>
+<td><code>project</code> (from credentials CSV)</td>
+<td>character</td>
+<td>Source REDCap project name</td>
+<td>e.g., <code>&quot;Kidsights Survey NORC 1&quot;</code></td>
+</tr>
+<tr class="even">
 <td><code>age_years</code></td>
 <td><code>age_in_days_n</code></td>
 <td>numeric</td>
 <td>Child 1 age in years</td>
 <td>0–5 (continuous)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>sex_norc</code></td>
 <td><code>cqr009</code></td>
 <td>character</td>
 <td>Child 1 sex</td>
 <td><code>&quot;Female&quot;</code>, <code>&quot;Male&quot;</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>race_norc</code></td>
 <td><code>cqr010b___*</code></td>
 <td>character</td>
 <td>Child 1 race</td>
 <td>See mapping below</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>hisp</code></td>
 <td><code>cqr011</code></td>
 <td>character</td>
 <td>Child 1 Hispanic/Latino ethnicity</td>
 <td><code>&quot;Hispanic&quot;</code>, <code>&quot;non-Hisp.&quot;</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>raceG_norc</code></td>
 <td>Derived</td>
 <td>character</td>
 <td>Child 1 combined race/ethnicity</td>
 <td>See mapping below</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>years_old_c2</code></td>
 <td><code>age_in_days_c2_n</code></td>
 <td>numeric</td>
 <td>Child 2 age in years</td>
 <td>0–5, <code>NA</code> if no child 2</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>sex_c2_norc</code></td>
 <td><code>cqr009_c2</code></td>
 <td>character</td>
 <td>Child 2 sex</td>
 <td><code>&quot;Female&quot;</code>, <code>&quot;Male&quot;</code>, <code>NA</code> if no child 2</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>race_c2_norc</code></td>
 <td><code>cqr010_c2b___*</code></td>
 <td>character</td>
 <td>Child 2 race</td>
 <td>Same categories as child 1</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>hisp_c2</code></td>
 <td><code>cqr011_c2</code></td>
 <td>character</td>
 <td>Child 2 Hispanic/Latino ethnicity</td>
 <td><code>&quot;Hispanic&quot;</code>, <code>&quot;non-Hisp.&quot;</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>raceG_c2_norc</code></td>
 <td>Derived</td>
 <td>character</td>
@@ -2899,34 +2942,41 @@ Tip
 <td>Unique within project</td>
 </tr>
 <tr class="odd">
+<td><code>redcap_project_name</code></td>
+<td><code>project</code> (from credentials CSV)</td>
+<td>character</td>
+<td>Source REDCap project name</td>
+<td>e.g., <code>&quot;Kidsights Survey NORC 1&quot;</code></td>
+</tr>
+<tr class="even">
 <td><code>age_years</code></td>
 <td><code>cqr003</code></td>
 <td>numeric</td>
 <td>Parent age in years</td>
 <td>Continuous</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>gender</code></td>
 <td><code>mn2</code></td>
 <td>character</td>
 <td>Parent gender</td>
 <td><code>&quot;Female&quot;</code>, <code>&quot;Male&quot;</code>, <code>&quot;Non-binary&quot;</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>race_ethnicity</code></td>
 <td><code>sq002b___*</code> + <code>sq003</code></td>
 <td>character</td>
 <td>Combined race/ethnicity</td>
 <td>See mapping below</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>education</code></td>
 <td><code>cqr004</code></td>
 <td>character</td>
 <td>Education level</td>
 <td>See mapping below</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>marital_status_label_norc</code></td>
 <td><code>cqfa001</code></td>
 <td>character</td>
@@ -3219,27 +3269,34 @@ Tip
 <td>Unique within project</td>
 </tr>
 <tr class="odd">
+<td><code>redcap_project_name</code></td>
+<td><code>project</code> (from credentials CSV)</td>
+<td>character</td>
+<td>Source REDCap project name</td>
+<td>e.g., <code>&quot;Kidsights Survey NORC 1&quot;</code></td>
+</tr>
+<tr class="even">
 <td><code>store_choice_label</code></td>
 <td><code>store_choice</code></td>
 <td>character</td>
 <td>Gift card store choice</td>
 <td>See mapping below</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>q1394</code></td>
 <td><code>q1394</code></td>
 <td>character</td>
 <td>Participant first name</td>
 <td>Free text</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>q1394a</code></td>
 <td><code>q1394a</code></td>
 <td>character</td>
 <td>Participant last name</td>
 <td>Free text</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>email_incentive</code></td>
 <td><code>email_incentive</code></td>
 <td>character</td>

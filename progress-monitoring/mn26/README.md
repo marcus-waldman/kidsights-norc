@@ -4,7 +4,7 @@ Scripts for NORC researchers to monitor Minnesota 2026 (MN26) study recruitment 
 
 ## Current Status
 
-**SMOKE TEST PASSING** — The monitoring script runs end-to-end against the NORC MN test REDCap project. Remaining `[MN26 TODO]` items (multi-child eligibility, geography/geocoding) will be updated as needed.
+**SMOKE TEST PASSING** — The monitoring script runs end-to-end against the **4 production REDCap projects** (Kidsights Survey NORC 1–4), combining **10,200 records** into a single set of monitoring data frames. Per-project record breakdown: NORC 1/2/3 = 2,500 each, NORC 4 = 2,700. Every output frame includes a `redcap_project_name` column for per-project traceability. Remaining `[MN26 TODO]` items (multi-child eligibility, geography/geocoding) will be updated as needed.
 
 ## Required REDCap API Access
 
@@ -15,12 +15,14 @@ Scripts for NORC researchers to monitor Minnesota 2026 (MN26) study recruitment 
 - `record_id` - REDCap record ID
 
 ### Eligibility Screening (Required)
-- `eq001` - Informed consent
-- `eq002` - Primary caregiver status
-- `eq003` - Parent/caregiver age (19+ years)
-- `mn_eqstate` - Minnesota residence
-- `age_in_days_n` - Child 1 age in days (calculated from DOB by REDCap)
-- `age_in_days_c2_n` - Child 2 age in days (if applicable)
+- `eq001` - Informed consent (in `consent_doc` instrument)
+- `eq002` - Primary caregiver status (in legacy `eligibility_form` instrument)
+- `eq003` - Parent/caregiver age (19+ years) (in legacy `eligibility_form` instrument)
+- `mn_eqstate` - Minnesota residence (in legacy `eligibility_form` instrument)
+- `age_in_days_n` - Child 1 age in days (in `eligibility_form_norc` instrument; calculated from DOB by REDCap)
+- `age_in_days_c2_n` - Child 2 age in days (in `eligibility_form_norc` instrument; if applicable)
+
+> **Note:** `eq002`/`eq003`/`mn_eqstate` live in the *legacy* `eligibility_form` REDCap instrument (a holdover from NE25), not in the newer `eligibility_form_norc` instrument. They are still pulled into raw data and remain available for downstream eligibility logic, but they do **not** appear in the `$eligibility_form` output frame, which is filtered to `form_name == "eligibility_form_norc"` only.
 
 ### Survey Completion Status (Required)
 - `module_2_complete` - Module 2 completion status
@@ -90,15 +92,17 @@ The monitoring script uses a **CSV file** to manage REDCap API credentials, foll
 **Template:** `mn26_redcap_api_template.csv`
 
 **Required Columns:**
-- `project`: Descriptive project name (e.g., "mn26_main_survey")
-- `pid`: REDCap project ID number (e.g., 7679)
+- `project`: Descriptive project name (e.g., `"Kidsights Survey NORC 1"`). This value is also propagated into every output data frame as the `redcap_project_name` column for per-project traceability.
+- `pid`: REDCap project ID number (e.g., 8609)
 - `api_code`: REDCap API token (long alphanumeric string)
 
-**Example CSV:**
+**Example CSV (MN26 production = 4 projects):**
 ```csv
 project,pid,api_code
-mn26_main_survey,7679,ABC123XYZ456DEF789...
-mn26_follow_up,8014,GHI012JKL345MNO678...
+Kidsights Survey NORC 1,8609,ABC123XYZ...
+Kidsights Survey NORC 2,8729,DEF456ABC...
+Kidsights Survey NORC 3,8841,GHI789DEF...
+Kidsights Survey NORC 4,8952,JKL012GHI...
 ```
 
 **Security Notes:**
@@ -109,16 +113,14 @@ mn26_follow_up,8014,GHI012JKL345MNO678...
 
 ### Multiple Projects
 
-If MN26 has multiple REDCap projects (e.g., main survey, follow-up, email registration), add them as separate rows in the CSV:
+The MN26 production setup uses **4 REDCap projects** (one per recruitment site), and the script handles any number of projects automatically — it iterates over every row in the credentials CSV. The pipeline:
 
-```csv
-project,pid,api_code
-mn26_main_survey,7679,TOKEN_1_HERE
-mn26_email_registration,7943,TOKEN_2_HERE
-mn26_follow_up,8014,TOKEN_3_HERE
-```
+1. Pulls raw data from each project via the REDCap API
+2. Tags each row with `redcap_project_name` (from the `project` column)
+3. Validates that the data dictionaries match across all projects (errors with a descriptive message if any field name, type, or choice list differs)
+4. `bind_rows()` everything into a single combined data frame before transformation
 
-The monitoring script will automatically combine data from all projects.
+Adding or removing projects requires no code changes — just edit the credentials CSV.
 
 ### Simple Function Call
 
@@ -133,8 +135,8 @@ That's it!
 ## Files
 
 - `monitoring_report.R` - Main standalone script for generating monitoring reports
-- `smoke-test.R` - Smoke test against live REDCap (requires API access)
-- `synthetic-test.R` - Offline synthetic data tests (no API needed, 102 assertions)
+- `smoke-test.R` - Smoke test against live REDCap (requires API access; configured for the 4 production projects)
+- `synthetic-test.R` - Offline synthetic data tests (no API needed, **133 assertions** including a multi-project bind_rows test section)
 - `mn26_redcap_api_template.csv` - Template for API credentials CSV file
 - `utils/redcap_utils.R` - REDCap API functions including `get_data_dictionary()`
 - `utils/data_transforms.R` - Data transformation functions (value labeling)
@@ -162,20 +164,23 @@ Then commit and push both files.
 
 Create a CSV file with your REDCap API credentials (use `mn26_redcap_api_template.csv` as a template):
 
-**CSV Format:**
+**CSV Format (4-project production setup):**
 ```csv
 project,pid,api_code
-mn26_main_survey,7679,ABC123XYZ456...
+Kidsights Survey NORC 1,8609,ABC123XYZ456...
+Kidsights Survey NORC 2,8729,DEF456ABC789...
+Kidsights Survey NORC 3,8841,GHI789DEF012...
+Kidsights Survey NORC 4,8952,JKL012GHI345...
 ```
 
 **Columns:**
-- `project`: Project name (descriptive identifier)
+- `project`: Project name (descriptive identifier; also exposed in outputs as `redcap_project_name`)
 - `pid`: REDCap project ID number
 - `api_code`: REDCap API token for that project
 
 **Save securely** (NOT in git repository):
 ```
-C:/Users/YOUR_USERNAME/my-APIs/mn26_redcap_api.csv
+C:/my_auths/kidsights_redcap_norc_MN_2026.csv
 ```
 
 ### 2. Run the Monitoring Report
@@ -186,7 +191,7 @@ source("progress-monitoring/mn26/monitoring_report.R")
 
 # Generate monitoring report (pass CSV path)
 monitoring_data <- generate_monitoring_report(
-  csv_path = "C:/Users/YOUR_USERNAME/my-APIs/mn26_redcap_api.csv"
+  csv_path = "C:/my_auths/kidsights_redcap_norc_MN_2026.csv"
 )
 
 # Explore the results
@@ -194,6 +199,9 @@ View(monitoring_data$eligibility_form)
 View(monitoring_data$survey_completion)
 View(monitoring_data$child_demographics)
 View(monitoring_data$parent_demographics)
+
+# Per-project record counts
+table(monitoring_data$child_demographics$redcap_project_name)
 ```
 
 ### 3. Pull the REDCap Data Dictionary
@@ -238,15 +246,17 @@ names(dict_mn)
 
 ## Output Data Frames
 
-The `generate_monitoring_report()` function returns a list with 5 data frames:
+The `generate_monitoring_report()` function returns a list with 5 data frames. Every frame includes `pid`, `record_id`, and **`redcap_project_name`** (the source REDCap project name from the credentials CSV) so each row can be traced back to one of the 4 production projects.
 
 ### 1. Eligibility Form
-All raw variables from the "Eligibility Form NORC" REDCap instrument, identified via the data dictionary's `form_name` field. Includes checkbox expansions and the instrument completion flag.
+All raw variables from the "Eligibility Form NORC" REDCap instrument, identified via the data dictionary's `form_name` field. Includes checkbox expansions and the instrument completion flag. In the 4 production projects this resolves to **15 fields + 1 completion flag**.
 
 **Columns:**
-- `pid`, `record_id`: Identifiers
-- All fields where `form_name == "eligibility_form_norc"` in the data dictionary (e.g., `eq002`, `eq003`, `mn_eqstate`, `age_in_days_n`)
+- `pid`, `record_id`, `redcap_project_name`: Identifiers / source project tag
+- All fields where `form_name == "eligibility_form_norc"` in the data dictionary — e.g., `consent_date_n`, `age_under_6_n`, `kids_u6_n`, `dob_n`, `age_in_days_n`, `parent_guardian_c1_n`, `dob_c2_n`, `age_in_days_c2_n`, etc.
 - `eligibility_form_norc_complete`: REDCap completion status (2 = complete)
+
+> **Important:** The legacy `eq002`/`eq003`/`mn_eqstate` fields live in the *old* `eligibility_form` instrument and are **not** part of this output. They remain in `raw_data` for downstream eligibility logic but are intentionally excluded from `$eligibility_form`.
 
 **Example:**
 ```r
@@ -257,7 +267,7 @@ View(monitoring_data$eligibility_form)
 Tracks module-by-module completion with per-participant denominator.
 
 **Columns:**
-- `pid`, `record_id`: Identifiers
+- `pid`, `record_id`, `redcap_project_name`: Identifiers / source project tag
 - `n_required`: Per-participant required module count (7-11)
 - `modules_complete`: Count of completed modules
 - `pct_complete`: Percentage complete
@@ -273,7 +283,7 @@ table(monitoring_data$survey_completion$modules_complete == monitoring_data$surv
 Age, sex, and race/ethnicity for each child participant.
 
 **Columns:**
-- `pid`, `record_id`: Identifiers
+- `pid`, `record_id`, `redcap_project_name`: Identifiers / source project tag
 - `age_years`: Child's age in years (0-5)
 - `sex`: Child's sex (Female/Male)
 - `race_norc`: Child 1 race (White, Black or African American, American Indian or Alaska Native, Asian, Native Hawaiian or Other Pacific Islander, Other, Two or More)
@@ -297,7 +307,7 @@ table(monitoring_data$child_demographics$raceG_norc)
 Demographics for the primary caregiver (respondent).
 
 **Columns:**
-- `pid`, `record_id`: Identifiers
+- `pid`, `record_id`, `redcap_project_name`: Identifiers / source project tag
 - `age_years`: Primary caregiver age in years
 - `gender`: Parent gender ("Female", "Male", "Non-binary")
 - `race_ethnicity`: Race/ethnicity combined (`a1_raceG_norc`)
@@ -326,7 +336,7 @@ table(monitoring_data$parent_demographics$marital_status_label_norc)
 Gift card and contact information from Module 9.
 
 **Columns:**
-- `pid`, `record_id`: Identifiers
+- `pid`, `record_id`, `redcap_project_name`: Identifiers / source project tag
 - `store_choice_label`: Gift card store ("Lowe's", "Amazon", "Walmart", "Target")
 - `q1394`: First name
 - `q1394a`: Last name
