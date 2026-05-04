@@ -187,8 +187,13 @@ norc_replace_records <- function(monitoring_data, id_xwalk) {
   new_pid_members <- monitoring_data$eligibility_form %>%
     filter(pid == 8792) %>%
     filter(!consent_date_n %>% is.na) %>%
-    left_join(id_xwalk, by = "record_id") %>%
-    pull(P_SUID)
+    left_join(id_xwalk, by = "record_id")
+
+  # If someone has consented with their third set of credentials, keep only
+  # the third one in `new_pid_members`
+  new_pid_members <- new_pid_members %>%
+    filter(.by = P_SUID, consent_date_n == max(consent_date_n)) %>%
+    select(P_SUID, record_id, everything())
 
   monitoring_data %>%
     map(
@@ -199,18 +204,19 @@ norc_replace_records <- function(monitoring_data, id_xwalk) {
           left_join(id_xwalk, by = "record_id") %>%
           select(all_of(names(id_xwalk)), everything())
 
-        # drop expired record id for cases in `new_pid_members`
+        # drop expired /unused record id(s) for cases in `new_pid_members`
         .x <- .x %>%
           filter(
             !when_all(
-              P_SUID %in% new_pid_members,
-              pid != 8792
+              P_SUID %in% new_pid_members$P_SUID,
+              !record_id %in% new_pid_members$record_id
             )
-          )
+          ) %>%
+          arrange(P_SUID)
 
         # drop record IDs in 8792 that have not yet been used
         .x <- .x %>%
-          filter(!when_all(pid == 8792, !P_SUID %in% new_pid_members))
+          filter(!when_all(pid == 8792, !P_SUID %in% new_pid_members$P_SUID))
 
         return(.x)
       }
