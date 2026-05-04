@@ -39,24 +39,19 @@ library(dplyr)
 library(tidyr)
 library(REDCapR)
 library(httr)
+library(here)
 
 # ============================================================================
 # LOAD UTILITY FUNCTIONS
 # ============================================================================
 
 # Get the directory where this script is located
-script_dir <- if (sys.nframe() == 0) {
-  # Running interactively or via source()
-  dirname(sys.frame(1)$ofile)
-} else {
-  # Running via Rscript
-  dirname(normalizePath(sys.frame(1)$ofile))
-}
+script_dir <- here("progress-monitoring/mn26")
 
 # Source utility files (self-contained, no external dependencies)
-source(file.path(script_dir, "utils", "safe_joins.R"))
-source(file.path(script_dir, "utils", "redcap_utils.R"))
-source(file.path(script_dir, "utils", "data_transforms.R"))
+source(here(script_dir, "utils", "safe_joins.R"))
+source(here(script_dir, "utils", "redcap_utils.R"))
+source(here(script_dir, "utils", "data_transforms.R"))
 
 # ============================================================================
 # STUDY-SPECIFIC FUNCTIONS
@@ -75,7 +70,6 @@ source(file.path(script_dir, "utils", "data_transforms.R"))
 #' @param data Raw or transformed REDCap data
 #' @return Data frame with eligibility columns
 calculate_eligibility <- function(data) {
-
   message("Calculating eligibility...")
 
   eligibility_df <- data %>%
@@ -94,26 +88,38 @@ calculate_eligibility <- function(data) {
       state_eligible = (mn_eqstate == 1) & !is.na(mn_eqstate),
 
       # All inputs missing = eligibility unknown (NA), not FALSE
-      all_inputs_missing = is.na(eq003) & is.na(age_in_days_n) &
-                           is.na(eq002) & is.na(mn_eqstate),
+      all_inputs_missing = is.na(eq003) &
+        is.na(age_in_days_n) &
+        is.na(eq002) &
+        is.na(mn_eqstate),
 
       # Overall eligibility
       eligible = ifelse(
-        all_inputs_missing, NA,
-        parent_age_eligible & child_age_eligible &
-          primary_caregiver_eligible & state_eligible
+        all_inputs_missing,
+        NA,
+        parent_age_eligible &
+          child_age_eligible &
+          primary_caregiver_eligible &
+          state_eligible
       )
     ) %>%
     dplyr::select(
-      pid, record_id,
-      parent_age_eligible, child_age_eligible,
-      primary_caregiver_eligible, state_eligible,
+      pid,
+      record_id,
+      parent_age_eligible,
+      child_age_eligible,
+      primary_caregiver_eligible,
+      state_eligible,
       eligible
     )
 
-  message("[OK] Eligibility: ",
-          sum(eligibility_df$eligible, na.rm = TRUE), " eligible, ",
-          sum(!eligibility_df$eligible, na.rm = TRUE), " not eligible")
+  message(
+    "[OK] Eligibility: ",
+    sum(eligibility_df$eligible, na.rm = TRUE),
+    " eligible, ",
+    sum(!eligibility_df$eligible, na.rm = TRUE),
+    " not eligible"
+  )
 
   return(eligibility_df)
 }
@@ -125,7 +131,6 @@ calculate_eligibility <- function(data) {
 #' @param eligibility_data Data frame from calculate_eligibility()
 #' @return Data frame with screener completion status
 calculate_screener_status <- function(eligibility_data) {
-
   message("Calculating screener completion status...")
 
   screener_df <- eligibility_data %>%
@@ -135,9 +140,13 @@ calculate_screener_status <- function(eligibility_data) {
     ) %>%
     dplyr::select(pid, record_id, screener_complete, screener_status)
 
-  message("[OK] Screener: ",
-          sum(screener_df$screener_complete, na.rm = TRUE), " complete, ",
-          sum(!screener_df$screener_complete, na.rm = TRUE), " incomplete")
+  message(
+    "[OK] Screener: ",
+    sum(screener_df$screener_complete, na.rm = TRUE),
+    " complete, ",
+    sum(!screener_df$screener_complete, na.rm = TRUE),
+    " incomplete"
+  )
 
   return(screener_df)
 }
@@ -165,7 +174,6 @@ calculate_screener_status <- function(eligibility_data) {
 #' @param data Raw REDCap data
 #' @return Data frame with survey completion status
 calculate_survey_completion <- function(data) {
-
   message("Calculating survey completion status...")
 
   # Helper: check if a column == 2 (complete), NA-safe
@@ -184,30 +192,49 @@ calculate_survey_completion <- function(data) {
 
   # --- Module 6 child 1: collapse age-band sub-instruments ---
   # Match module_6_*_complete but NOT module_6_*_2_complete (child 2)
-  m6_c1_cols <- grep("^module_6_(?!.*_2_complete).*_complete$", names(data),
-                     value = TRUE, perl = TRUE)
+  m6_c1_cols <- grep(
+    "^module_6_(?!.*_2_complete).*_complete$",
+    names(data),
+    value = TRUE,
+    perl = TRUE
+  )
 
   # --- Module 6 child 2: collapse age-band sub-instruments ---
   m6_c2_cols <- grep("^module_6_.*_2_complete$", names(data), value = TRUE)
 
   # --- Build completion data frame ---
   # Grab all columns we might need
-  all_cols <- unique(c(always_available, m6_c1_cols, m6_c2_cols,
-                       "nsch_questions_complete", "child_information_2_954c_complete",
-                       "nsch_questions_2_complete",
-                       "age_in_days_n", "age_in_days_c2_n", "dob_c2_n"))
+  all_cols <- unique(c(
+    always_available,
+    m6_c1_cols,
+    m6_c2_cols,
+    "nsch_questions_complete",
+    "child_information_2_954c_complete",
+    "nsch_questions_2_complete",
+    "age_in_days_n",
+    "age_in_days_c2_n",
+    "dob_c2_n"
+  ))
   avail_cols <- intersect(all_cols, names(data))
 
   completion_df <- data %>%
-    dplyr::select(pid, record_id, dplyr::any_of("redcap_project_name"),
-                  dplyr::any_of(avail_cols))
+    dplyr::select(
+      pid,
+      record_id,
+      dplyr::any_of("redcap_project_name"),
+      dplyr::any_of(avail_cols)
+    )
 
   n <- nrow(completion_df)
 
   # Collapse module 6 child 1: complete if any age-band sub-instrument == 2
   if (length(m6_c1_cols) > 0) {
     completion_df$m6_c1_complete <- apply(
-      completion_df[, intersect(m6_c1_cols, names(completion_df)), drop = FALSE], 1,
+      completion_df[,
+        intersect(m6_c1_cols, names(completion_df)),
+        drop = FALSE
+      ],
+      1,
       function(x) ifelse(any(x == 2, na.rm = TRUE), 2, NA_real_)
     )
   } else {
@@ -217,7 +244,11 @@ calculate_survey_completion <- function(data) {
   # Collapse module 6 child 2: complete if any age-band sub-instrument == 2
   if (length(m6_c2_cols) > 0) {
     completion_df$m6_c2_complete <- apply(
-      completion_df[, intersect(m6_c2_cols, names(completion_df)), drop = FALSE], 1,
+      completion_df[,
+        intersect(m6_c2_cols, names(completion_df)),
+        drop = FALSE
+      ],
+      1,
       function(x) ifelse(any(x == 2, na.rm = TRUE), 2, NA_real_)
     )
   } else {
@@ -254,8 +285,10 @@ calculate_survey_completion <- function(data) {
   # --- Count completed modules per participant ---
   # Always-required (non-module-6)
   n_always_done <- rowSums(
-    matrix(sapply(always_available, function(col) is_complete(completion_df[[col]])),
-           nrow = n),
+    matrix(
+      sapply(always_available, function(col) is_complete(completion_df[[col]])),
+      nrow = n
+    ),
     na.rm = TRUE
   )
 
@@ -271,7 +304,9 @@ calculate_survey_completion <- function(data) {
   nsch_c1_done <- nsch_c1_req & is_complete(nsch_c1_col)
 
   # Child 2 info
-  c2_info_col <- if ("child_information_2_954c_complete" %in% names(completion_df)) {
+  c2_info_col <- if (
+    "child_information_2_954c_complete" %in% names(completion_df)
+  ) {
     completion_df$child_information_2_954c_complete
   } else {
     rep(NA_real_, n)
@@ -290,15 +325,18 @@ calculate_survey_completion <- function(data) {
   nsch_c2_done <- nsch_c2_req & is_complete(nsch_c2_col)
 
   # --- Per-participant denominator ---
-  n_required <- length(always_available) + 1L  # always-required + module 6 child 1
+  n_required <- length(always_available) + 1L # always-required + module 6 child 1
   n_required <- n_required + as.integer(nsch_c1_req)
-  n_required <- n_required + as.integer(has_c2) * 2L  # child info 2 + module 6 child 2
+  n_required <- n_required + as.integer(has_c2) * 2L # child info 2 + module 6 child 2
   n_required <- n_required + as.integer(nsch_c2_req)
 
   # --- Total completed ---
-  modules_complete <- as.integer(n_always_done) + as.integer(m6_c1_done) +
-    as.integer(nsch_c1_done) + as.integer(c2_info_done) +
-    as.integer(m6_c2_done) + as.integer(nsch_c2_done)
+  modules_complete <- as.integer(n_always_done) +
+    as.integer(m6_c1_done) +
+    as.integer(nsch_c1_done) +
+    as.integer(c2_info_done) +
+    as.integer(m6_c2_done) +
+    as.integer(nsch_c2_done)
 
   # --- Build result ---
   completion_df$n_required <- n_required
@@ -306,17 +344,20 @@ calculate_survey_completion <- function(data) {
   completion_df$pct_complete <- round(modules_complete / n_required * 100, 1)
   # --- Last completed module (in instrument order) ---
   ordered <- list(
-    list(col = "consent_doc_complete",                    label = "Consent"),
-    list(col = "eligibility_form_norc_complete",          label = "Eligibility"),
-    list(col = "module_2_family_information_complete",    label = "Family Info"),
-    list(col = "module_3_child_information_complete",     label = "Child Info"),
-    list(col = "m6_c1_complete",                          label = "Module 6 (C1)"),
-    list(col = "nsch_questions_complete",                 label = "NSCH (C1)"),
-    list(col = "child_information_2_954c_complete",       label = "Child Info 2"),
-    list(col = "m6_c2_complete",                          label = "Module 6 (C2)"),
-    list(col = "nsch_questions_2_complete",               label = "NSCH (C2)"),
-    list(col = "module_9_compensation_information_complete", label = "Compensation"),
-    list(col = "module_8_followup_information_complete",  label = "Follow-up")
+    list(col = "consent_doc_complete", label = "Consent"),
+    list(col = "eligibility_form_norc_complete", label = "Eligibility"),
+    list(col = "module_2_family_information_complete", label = "Family Info"),
+    list(col = "module_3_child_information_complete", label = "Child Info"),
+    list(col = "m6_c1_complete", label = "Module 6 (C1)"),
+    list(col = "nsch_questions_complete", label = "NSCH (C1)"),
+    list(col = "child_information_2_954c_complete", label = "Child Info 2"),
+    list(col = "m6_c2_complete", label = "Module 6 (C2)"),
+    list(col = "nsch_questions_2_complete", label = "NSCH (C2)"),
+    list(
+      col = "module_9_compensation_information_complete",
+      label = "Compensation"
+    ),
+    list(col = "module_8_followup_information_complete", label = "Follow-up")
   )
 
   last_module <- rep(NA_character_, n)
@@ -329,14 +370,24 @@ calculate_survey_completion <- function(data) {
   completion_df$last_module_complete <- last_module
 
   result <- completion_df %>%
-    dplyr::select(pid, record_id, dplyr::any_of("redcap_project_name"),
-                  n_required, modules_complete, pct_complete,
-                  last_module_complete)
+    dplyr::select(
+      pid,
+      record_id,
+      dplyr::any_of("redcap_project_name"),
+      n_required,
+      modules_complete,
+      pct_complete,
+      last_module_complete
+    )
 
   n_complete <- sum(result$modules_complete == result$n_required, na.rm = TRUE)
-  message("[OK] Survey: ",
-          n_complete, " complete, ",
-          nrow(result) - n_complete, " incomplete")
+  message(
+    "[OK] Survey: ",
+    n_complete,
+    " complete, ",
+    nrow(result) - n_complete,
+    " incomplete"
+  )
 
   return(result)
 }
@@ -352,18 +403,26 @@ calculate_survey_completion <- function(data) {
 #' @param data Transformed data
 #' @return Data frame with child age and sex
 extract_child_demographics <- function(data) {
-
   message("Extracting child demographics...")
 
   child_demo <- data %>%
-    dplyr::select(pid, record_id, dplyr::any_of("redcap_project_name"),
-                  age_years = years_old,
-                  sex_norc,
-                  race_norc, hisp, raceG_norc,
-                  dplyr::any_of(c(
-                    "years_old_c2", "sex_c2_norc",
-                    "race_c2_norc", "hisp_c2", "raceG_c2_norc"
-                  )))
+    dplyr::select(
+      pid,
+      record_id,
+      dplyr::any_of("redcap_project_name"),
+      age_years = years_old,
+      sex_norc,
+      race_norc,
+      hisp,
+      raceG_norc,
+      dplyr::any_of(c(
+        "years_old_c2",
+        "sex_c2_norc",
+        "race_c2_norc",
+        "hisp_c2",
+        "raceG_c2_norc"
+      ))
+    )
 
   message("[OK] Child demographics: ", nrow(child_demo), " records")
   return(child_demo)
@@ -374,16 +433,19 @@ extract_child_demographics <- function(data) {
 #' @param data Transformed data
 #' @return Data frame with parent demographics
 extract_parent_demographics <- function(data) {
-
   message("Extracting parent demographics...")
 
   parent_demo <- data %>%
-    dplyr::select(pid, record_id, dplyr::any_of("redcap_project_name"),
-                  age_years = a1_years_old,
-                  gender = a1_gender_norc,
-                  race_ethnicity = a1_raceG_norc,
-                  education = educ_a1_norc,
-                  marital_status_label_norc)
+    dplyr::select(
+      pid,
+      record_id,
+      dplyr::any_of("redcap_project_name"),
+      age_years = a1_years_old,
+      gender = a1_gender_norc,
+      race_ethnicity = a1_raceG_norc,
+      education = educ_a1_norc,
+      marital_status_label_norc
+    )
 
   message("[OK] Parent demographics: ", nrow(parent_demo), " records")
   return(parent_demo)
@@ -398,7 +460,6 @@ extract_parent_demographics <- function(data) {
 #' @param dictionary Named list from get_data_dictionary()
 #' @return Data frame with pid, record_id, and all eligibility form fields
 extract_eligibility_form <- function(data, dictionary) {
-
   message("Extracting eligibility form variables...")
 
   # Find fields belonging to the eligibility_form_norc instrument
@@ -411,7 +472,10 @@ extract_eligibility_form <- function(data, dictionary) {
 
   if (length(elig_fields) == 0) {
     warning("No fields found for 'eligibility_form_norc' in data dictionary")
-    return(data %>% dplyr::select(pid, record_id, dplyr::any_of("redcap_project_name")))
+    return(
+      data %>%
+        dplyr::select(pid, record_id, dplyr::any_of("redcap_project_name"))
+    )
   }
 
   # Expand checkbox fields: raw data has field___code columns
@@ -436,10 +500,21 @@ extract_eligibility_form <- function(data, dictionary) {
   }
 
   avail <- intersect(expanded_fields, names(data))
-  result <- data %>% dplyr::select(pid, record_id, dplyr::any_of("redcap_project_name"),
-                                   dplyr::any_of(avail))
+  result <- data %>%
+    dplyr::select(
+      pid,
+      record_id,
+      dplyr::any_of("redcap_project_name"),
+      dplyr::any_of(avail)
+    )
 
-  message("[OK] Eligibility form: ", length(avail), " fields, ", nrow(result), " records")
+  message(
+    "[OK] Eligibility form: ",
+    length(avail),
+    " fields, ",
+    nrow(result),
+    " records"
+  )
   return(result)
 }
 
@@ -448,13 +523,20 @@ extract_eligibility_form <- function(data, dictionary) {
 #' @param data Transformed data
 #' @return Data frame with gift card and contact info
 extract_compensation_information <- function(data) {
-
   message("Extracting compensation information...")
 
   comp <- data %>%
-    dplyr::select(pid, record_id, dplyr::any_of("redcap_project_name"),
-                  dplyr::any_of(c("store_choice_label",
-                                  "q1394", "q1394a", "email_incentive")))
+    dplyr::select(
+      pid,
+      record_id,
+      dplyr::any_of("redcap_project_name"),
+      dplyr::any_of(c(
+        "store_choice_label",
+        "q1394",
+        "q1394a",
+        "email_incentive"
+      ))
+    )
 
   message("[OK] Compensation information: ", nrow(comp), " records")
   return(comp)
@@ -469,20 +551,21 @@ extract_compensation_information <- function(data) {
 #' Main function that orchestrates all monitoring components.
 #' Pass the path to your API credentials CSV and it does everything.
 #'
-#' @param csv_path Path to API credentials CSV file (columns: project, pid, api_code)
+#' @param creds Credentials passed from load_api_credentials or similar
 #' @param redcap_url REDCap API URL (defaults to UNMC REDCap instance)
 #' @return List with 5 data frames (eligibility_form, survey_completion,
 #'   child_demographics, parent_demographics, compensation_information). Every
 #'   returned frame includes a `redcap_project_name` column identifying which
 #'   REDCap project each row was pulled from.
 #' @export
-generate_monitoring_report <- function(csv_path,
-                                      redcap_url = "https://unmcredcap.unmc.edu/redcap/api/") {
-
+generate_monitoring_report <- function(
+  creds,
+  redcap_url = "https://unmcredcap.unmc.edu/redcap/api/"
+) {
   cat("\n=== MN26 SAMPLE MONITORING REPORT ===\n\n")
 
   # Step 1: Load API credentials
-  credentials <- load_api_credentials(csv_path)
+  credentials <- creds
 
   # Step 2: Pull raw data from REDCap
   api_result <- pull_redcap_data(credentials, redcap_url)
@@ -511,16 +594,42 @@ generate_monitoring_report <- function(csv_path,
     survey_completion = survey_completion,
     child_demographics = child_demographics,
     parent_demographics = parent_demographics,
-    compensation_information = compensation_information
+    compensation_information = compensation_information,
+    all_data = api_result$data
   )
 
   cat("\n=== MONITORING REPORT COMPLETE ===\n")
   cat("Access data frames:\n")
-  cat("  - $eligibility_form (", nrow(eligibility_form), " records)\n", sep = "")
-  cat("  - $survey_completion (", nrow(survey_completion), " records)\n", sep = "")
-  cat("  - $child_demographics (", nrow(child_demographics), " records)\n", sep = "")
-  cat("  - $parent_demographics (", nrow(parent_demographics), " records)\n", sep = "")
-  cat("  - $compensation_information (", nrow(compensation_information), " records)\n\n", sep = "")
+  cat(
+    "  - $eligibility_form (",
+    nrow(eligibility_form),
+    " records)\n",
+    sep = ""
+  )
+  cat(
+    "  - $survey_completion (",
+    nrow(survey_completion),
+    " records)\n",
+    sep = ""
+  )
+  cat(
+    "  - $child_demographics (",
+    nrow(child_demographics),
+    " records)\n",
+    sep = ""
+  )
+  cat(
+    "  - $parent_demographics (",
+    nrow(parent_demographics),
+    " records)\n",
+    sep = ""
+  )
+  cat(
+    "  - $compensation_information (",
+    nrow(compensation_information),
+    " records)\n\n",
+    sep = ""
+  )
 
   return(results)
 }

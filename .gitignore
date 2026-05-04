@@ -86,3 +86,10 @@ rsconnect/
 .claude/
 .claude_*
 *_claude_*
+
+# renv 
+.Rprofile 
+renv/
+
+# local 
+local/

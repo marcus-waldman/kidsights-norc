@@ -9,7 +9,6 @@
 #' @param csv_path Path to API credentials CSV file
 #' @return Data frame with credentials
 load_api_credentials <- function(csv_path) {
-
   if (!file.exists(csv_path)) {
     stop(paste("API credentials file not found:", csv_path))
   }
@@ -19,7 +18,10 @@ load_api_credentials <- function(csv_path) {
   required_cols <- c("project", "pid", "api_code")
   missing_cols <- setdiff(required_cols, names(credentials))
   if (length(missing_cols) > 0) {
-    stop(paste("Missing required columns in credentials file:", paste(missing_cols, collapse = ", ")))
+    stop(paste(
+      "Missing required columns in credentials file:",
+      paste(missing_cols, collapse = ", ")
+    ))
   }
 
   message("[OK] Loaded ", nrow(credentials), " API credential(s)")
@@ -37,11 +39,14 @@ load_api_credentials <- function(csv_path) {
 #' @param exclude_hidden Logical, whether to exclude @HIDDEN fields (default TRUE)
 #' @return Named list where each element is a field's metadata
 get_data_dictionary <- function(redcap_url, token, exclude_hidden = TRUE) {
-
   resp <- httr::POST(
     redcap_url,
-    body = list(token = token, content = "metadata",
-                format = "json", returnFormat = "json"),
+    body = list(
+      token = token,
+      content = "metadata",
+      format = "json",
+      returnFormat = "json"
+    ),
     encode = "form"
   )
 
@@ -52,10 +57,13 @@ get_data_dictionary <- function(redcap_url, token, exclude_hidden = TRUE) {
   dict_list <- httr::content(resp)
 
   if (exclude_hidden) {
-    dict_list <- Filter(function(d) {
-      ann <- d$field_annotation
-      is.null(ann) || !grepl("@HIDDEN", ann)
-    }, dict_list)
+    dict_list <- Filter(
+      function(d) {
+        ann <- d$field_annotation
+        is.null(ann) || !grepl("@HIDDEN", ann)
+      },
+      dict_list
+    )
   }
 
   dict_named <- list()
@@ -63,8 +71,12 @@ get_data_dictionary <- function(redcap_url, token, exclude_hidden = TRUE) {
     dict_named[[d$field_name]] <- d
   }
 
-  message("[OK] Data dictionary: ", length(dict_named), " fields",
-          if (exclude_hidden) " (after excluding @HIDDEN)" else "")
+  message(
+    "[OK] Data dictionary: ",
+    length(dict_named),
+    " fields",
+    if (exclude_hidden) " (after excluding @HIDDEN)" else ""
+  )
   return(dict_named)
 }
 
@@ -77,7 +89,6 @@ get_data_dictionary <- function(redcap_url, token, exclude_hidden = TRUE) {
 #' @param dict_b Named list (dictionary to compare)
 #' @return Character vector of mismatch descriptions (empty if consistent)
 validate_dictionaries <- function(dict_a, dict_b) {
-
   mismatches <- character(0)
 
   fields_a <- names(dict_a)
@@ -88,14 +99,22 @@ validate_dictionaries <- function(dict_a, dict_b) {
   only_in_b <- setdiff(fields_b, fields_a)
 
   if (length(only_in_a) > 0) {
-    mismatches <- c(mismatches,
-      paste0("Fields in reference but not in comparison: ",
-             paste(only_in_a, collapse = ", ")))
+    mismatches <- c(
+      mismatches,
+      paste0(
+        "Fields in reference but not in comparison: ",
+        paste(only_in_a, collapse = ", ")
+      )
+    )
   }
   if (length(only_in_b) > 0) {
-    mismatches <- c(mismatches,
-      paste0("Fields in comparison but not in reference: ",
-             paste(only_in_b, collapse = ", ")))
+    mismatches <- c(
+      mismatches,
+      paste0(
+        "Fields in comparison but not in reference: ",
+        paste(only_in_b, collapse = ", ")
+      )
+    )
   }
 
   # Check shared fields for type and choices differences
@@ -104,15 +123,24 @@ validate_dictionaries <- function(dict_a, dict_b) {
     type_a <- dict_a[[fld]]$field_type
     type_b <- dict_b[[fld]]$field_type
     if (!identical(type_a, type_b)) {
-      mismatches <- c(mismatches,
-        paste0("Field '", fld, "' type differs: '", type_a, "' vs '", type_b, "'"))
+      mismatches <- c(
+        mismatches,
+        paste0(
+          "Field '",
+          fld,
+          "' type differs: '",
+          type_a,
+          "' vs '",
+          type_b,
+          "'"
+        )
+      )
     }
 
     choices_a <- dict_a[[fld]]$select_choices_or_calculations
     choices_b <- dict_b[[fld]]$select_choices_or_calculations
     if (!identical(choices_a, choices_b)) {
-      mismatches <- c(mismatches,
-        paste0("Field '", fld, "' choices differ"))
+      mismatches <- c(mismatches, paste0("Field '", fld, "' choices differ"))
     }
   }
 
@@ -128,7 +156,6 @@ validate_dictionaries <- function(dict_a, dict_b) {
 #' @param redcap_url REDCap API URL
 #' @return List with $data (combined data frame) and $dictionary (from first project)
 pull_redcap_data <- function(credentials, redcap_url) {
-
   message("Pulling data from REDCap API...")
   message("REDCap URL: ", redcap_url)
 
@@ -142,21 +169,24 @@ pull_redcap_data <- function(credentials, redcap_url) {
     message("  - Extracting from project: ", project_name)
 
     # Use redcap_read() with consistent parameters (not redcap_read_oneshot)
-    result <- tryCatch({
-      REDCapR::redcap_read(
-        redcap_uri = redcap_url,
-        token = api_token,
-        raw_or_label = "raw",
-        raw_or_label_headers = "raw",
-        export_checkbox_label = FALSE,
-        export_survey_fields = TRUE,
-        export_data_access_groups = FALSE,
-        config_options = list(connecttimeout = 300, timeout = 300)
-      )
-    }, error = function(e) {
-      warning("Failed to pull from ", project_name, ": ", e$message)
-      return(NULL)
-    })
+    result <- tryCatch(
+      {
+        REDCapR::redcap_read(
+          redcap_uri = redcap_url,
+          token = api_token,
+          raw_or_label = "raw",
+          raw_or_label_headers = "raw",
+          export_checkbox_label = FALSE,
+          export_survey_fields = TRUE,
+          export_data_access_groups = FALSE,
+          config_options = list(connecttimeout = 300, timeout = 300)
+        )
+      },
+      error = function(e) {
+        warning("Failed to pull from ", project_name, ": ", e$message)
+        return(NULL)
+      }
+    )
 
     if (is.null(result) || !result$success) {
       warning("Skipping project: ", project_name)
@@ -165,8 +195,10 @@ pull_redcap_data <- function(credentials, redcap_url) {
 
     # Add source project metadata
     project_data <- result$data %>%
-      dplyr::mutate(redcap_project_name = project_name,
-                    pid = credentials$pid[i])
+      dplyr::mutate(
+        redcap_project_name = project_name,
+        pid = credentials$pid[i]
+      )
 
     all_data[[project_name]] <- project_data
 
@@ -174,7 +206,12 @@ pull_redcap_data <- function(credentials, redcap_url) {
     dict_result <- tryCatch(
       get_data_dictionary(redcap_url, api_token, exclude_hidden = FALSE),
       error = function(e) {
-        warning("Could not pull data dictionary for ", project_name, ": ", e$message)
+        warning(
+          "Could not pull data dictionary for ",
+          project_name,
+          ": ",
+          e$message
+        )
         NULL
       }
     )
@@ -200,17 +237,46 @@ pull_redcap_data <- function(credentials, redcap_url) {
       cmp_name <- names(all_dictionaries)[j]
       issues <- validate_dictionaries(ref_dict, all_dictionaries[[cmp_name]])
       if (length(issues) > 0) {
-        stop("Data dictionary mismatch between '", ref_name, "' and '", cmp_name, "':\n",
-             paste("  -", issues, collapse = "\n"))
+        stop(
+          "Data dictionary mismatch between '",
+          ref_name,
+          "' and '",
+          cmp_name,
+          "':\n",
+          paste("  -", issues, collapse = "\n")
+        )
       }
     }
-    message("[OK] Data dictionaries consistent across ", length(all_dictionaries), " projects")
+    message(
+      "[OK] Data dictionaries consistent across ",
+      length(all_dictionaries),
+      " projects"
+    )
   }
+
+  all_data <- all_data |>
+    purrr::map(
+      ~ .x |>
+        dplyr::mutate(
+          cqr003 = as.double(cqr003),
+          dplyr::across(
+            dplyr::ends_with("timestamp"),
+            ~ .x |>
+              as.character() |>
+              dplyr::na_if("[not completed]") |>
+              lubridate::ymd_hms()
+          )
+        )
+    )
 
   combined_data <- dplyr::bind_rows(all_data)
   message("[OK] Total records across all projects: ", nrow(combined_data))
 
   # Return the first project's dictionary (validated to match all others)
-  reference_dict <- if (length(all_dictionaries) > 0) all_dictionaries[[1]] else list()
+  reference_dict <- if (length(all_dictionaries) > 0) {
+    all_dictionaries[[1]]
+  } else {
+    list()
+  }
   return(list(data = combined_data, dictionary = reference_dict))
 }
